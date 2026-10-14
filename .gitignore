@@ -28,3 +28,10 @@ build/
 *.iml
 .DS_Store
 Thumbs.db
+# Секрети (ключ Meshy тощо) — не в git
+.env
+
+# ref2game: залежності скіла (Playwright ставиться сам при першому запуску)
+.claude/skills/ref2game/scripts/node_modules/
+.claude/skills/ref2game/scripts/package-lock.json
+.claude/settings.local.json
