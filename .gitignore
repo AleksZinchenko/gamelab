@@ -1,0 +1,30 @@
+# Збірки
+builds/
+*.exe
+*.apk
+*.aab
+*.pck
+
+# Godot
+.godot/
+*.import
+export_presets.cfg
+
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins*
+
+# IDE та ОС
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
