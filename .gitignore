@@ -35,3 +35,6 @@ Thumbs.db
 .claude/skills/ref2game/scripts/node_modules/
 .claude/skills/ref2game/scripts/package-lock.json
 .claude/settings.local.json
+
+# Python-кеш
+__pycache__/
