@@ -1,0 +1,44 @@
+{
+  "generator": {
+    "provider": "meshy",
+    "model": null,
+    "size": "1536x1024",
+    "quality": "high",
+    "opaque": [
+      "bg_sky*",
+      "*_tex"
+    ]
+  },
+  "style_bible": "art/style_bible.txt",
+  "style_ref": [
+    "ref.png",
+    "study/style_probe/B_gouache.png",
+    "study/refs/cast.png"
+  ],
+  "view": [
+    1920,
+    1080
+  ],
+  "prep": {
+    "src": "art/gen",
+    "dst": "live/assets",
+    "manifest": "live/assets.js",
+    "notrim": [
+      "*__*",
+      "*_arms",
+      "*_tex",
+      "*_w",
+      "bg_*",
+      "lina_top"
+    ],
+    "skip": [
+      "*_sheet",
+      "*_raw"
+    ],
+    "max": 2048,
+    "walk": {
+      "ground": 0.6,
+      "ledge*": 0.45
+    }
+  }
+}

@@ -1,0 +1,3 @@
+Hand-drawn pictogram sheet for the thought bubbles of a whimsical wordless adventure game (like the pencil-sketch thoughts in Machinarium): each pictogram is a quick, charming GRAPHITE PENCIL sketch with a loose, slightly wobbly line, light grey hatching for shading and only a small accent of muted colour (rust red, teal, ochre, violet) where noted. Drawn on plain white paper. Each pictogram fits a square, simple, instantly readable silhouette, no background, no frame, no circles around them, no text, no letters, no numbers unless noted.
+Layout: a grid of 4 columns x 3 rows, all pictograms the same size, with WIDE empty white gutters between them so none touch.
+Row by row, left to right:

@@ -1,0 +1,12 @@
+The LEFT half of a wide background for a point-and-click adventure game: an EMPTY old research laboratory at night, no people, no animals, no characters. Image 1 shows the style and the look of this laboratory; paint in exactly that gouache style and palette.
+Camera: straight from the front like a theatre stage, eye level, the back wall parallel to the picture plane, no fisheye. The ceiling with cables and a pipe occupies the top 12% of the image. The floor (worn checkered tiles in muted ochre and teal) starts at 77% of the image height and fills the bottom of the image.
+Objects from left to right (positions in % of the image width):
+- 7%-32%: a dark green chalkboard on the wall with a few faint chalk scribbles, its top at 23% height;
+- 6%-37%: a long worn wooden desk below the chalkboard with a green-shaded desk lamp (lit, warm), papers, an old microscope; a simple wooden chair at 30%;
+- 38%-46%: a tall window with the night sky and a thin moon; on the windowsill a small plant growing out of an old rubber glove;
+- 47%-59%: a tall grey riveted metal cabinet with a small blank paper sign on its upper door;
+- 60%-67%: a small table with an old fax machine, an old wall telephone above it on the wall;
+- 69%-79%: a worn wooden door with a small blank plate; a round wall clock above the door; a small framed portrait to the right of the clock;
+- 81%-87%: an old electrical fuse box on the wall at chest height;
+- 88%-100%: plain painted wall with one vertical copper pipe running from the floor to the ceiling at 93%-96%.
+One warm ceiling lamp hangs at 50%. Large calm areas of plain wall between the objects. No text anywhere.

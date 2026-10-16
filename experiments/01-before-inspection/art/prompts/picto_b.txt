@@ -1,0 +1,6 @@
+Hand-drawn pictogram sheet for the thought bubbles of a whimsical wordless adventure game (like the pencil-sketch thoughts in Machinarium): each pictogram is a quick, charming GRAPHITE PENCIL sketch with a loose, slightly wobbly line, light grey hatching for shading and only a small accent of muted colour (rust red, teal, ochre, violet) where noted. Drawn on plain white paper. Each pictogram fits a square, simple, instantly readable silhouette, no background, no frame, no circles around them, no text, no letters, no numbers unless noted.
+Layout: a grid of 4 columns x 3 rows, all pictograms the same size, with WIDE empty white gutters between them so none touch.
+Row by row, left to right:
+1 a round wall clock showing nine o'clock; 2 an official building with columns and a flag; 3 a rubber stamp; 4 a sneaky rat carrying a folded paper;
+5 a laughing pink axolotl (pink accent) with little bubbles; 6 two legs in boots sticking out from under something; 7 a big backpack; 8 a wide-open eye;
+9 a long beard glowing with little sparkles (violet accent); 10 an old wall telephone ringing (little shake lines); 11 sleepy letters made of three z-shapes in a row getting bigger; 12 a thick hand-drawn arrow pointing right.

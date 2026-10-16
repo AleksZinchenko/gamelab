@@ -1,0 +1,6 @@
+Game UI asset sheet, hand-drawn: THOUGHT BUBBLES for a whimsical point-and-click adventure, drawn by hand with a soft graphite pencil and filled with warm cream paper colour (#f3ead6), like the round thought bubbles in a hand-made storybook game.
+On one sheet, separated by WIDE empty gutters, on a perfectly flat pure magenta background (#ff00ff):
+1. top left: one big ROUND thought bubble (a slightly irregular circle, wobbly hand-drawn pencil outline, a few faint pencil hatching strokes inside near the edge, the inside mostly plain cream);
+2. top right: one big WIDE OVAL thought bubble (about twice as wide as tall), same look;
+3. bottom row: three small separate round "tail" circles of decreasing size (the little dots that lead from a thought bubble to the head).
+The bubbles are EMPTY inside: no drawings, no text, no letters. Flat front view, no shadows, no perspective. Nothing else on the sheet.

@@ -38,3 +38,6 @@ Thumbs.db
 
 # Python-кеш
 __pycache__/
+
+# Скріншоти чужих ігор — лише як референс кольору, не в git (авторські права)
+experiments/*/study/refs/machinarium/

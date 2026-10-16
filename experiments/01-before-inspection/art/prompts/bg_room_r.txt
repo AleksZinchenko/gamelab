@@ -1,0 +1,10 @@
+The RIGHT half of the same wide background for a point-and-click adventure game: the same EMPTY old research laboratory at night, no people, no animals, no characters. Image 2 is the LEFT half of this room - this image continues it to the right: exactly the same wall colour, the same ceiling height (top 12%), the same floor line at 77% of the image height with the same checkered tiles, the same light and the same gouache brushwork. Image 1 shows the style of this laboratory.
+Camera: straight from the front like a theatre stage, eye level, the back wall parallel to the picture plane, no fisheye.
+Objects from left to right (positions in % of the image width):
+- 0%-12%: the back wall simply continues from the left image edge (NO room corner on the left side); one vertical copper pipe from the floor to the ceiling at 5%-8% (the same pipe as near the right edge of Image 2);
+- 17%-38%: a big old machine: a heavy metal base with gauges and rivets, on top a large round glass dome with a glowing blue crystal inside, copper pipes rising from it into the ceiling, a pressure gauge on one pipe;
+- 38%-50%: empty floor in front of a plain wall;
+- 50%-72%: old wooden shelves with dusty glass jars; on the middle shelf an aquarium (empty of animals, just water and a few plants; the water level is slightly HIGHER than the glass rim, an impossible bulge of water), a dented chrome toaster at 68%-72%;
+- 73%-82%: a tall grey metal cabinet with a faded red-and-white warning stripe;
+- 85%-99%: a control console with three big round knobs and old dials, a small lit desk lamp on it; above it a tall window with the night sky at 87%-96%.
+One warm ceiling lamp hangs at 45%. Large calm areas of plain wall between the objects. No text anywhere.
