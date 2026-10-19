@@ -29,7 +29,8 @@
       "*_tex",
       "*_w",
       "bg_*",
-      "lina_top"
+      "lina_top",
+      "*_top"
     ],
     "skip": [
       "*_sheet",

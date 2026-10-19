@@ -27,7 +27,9 @@
   }
 
   // Намалювати ходока. o: { x, y — точка між ступнями на екрані; face: 1 вправо / -1 вліво; dist — пройдена відстань;
-  // wk — 0 стоїть … 1 іде; cycle — довжина циклу (два кроки) у px; id — ім'я для QA-трасування; lift; t — час }
+  // wk — 0 стоїть … 1 іде; cycle — довжина циклу (два кроки) у px; id — ім'я для QA-трасування; lift; t — час;
+  // arms: { R: [мах, згин ліктя], L: [мах] } — поза рук замість маху ходи (замах ключем, ковток з пробірки) }
+  // Повертає точки для реквізиту: hand — кисть ближньої руки (екран), ang — кут передпліччя, top(p) — px текстури верху → екран.
   P.walker = (name, o) => {
     const R = RIGS[name], T = (part) => name + '__' + part;
     const cycle = o.cycle || 180, S = STANCE * cycle * o.wk, lift = (o.lift || 26) * o.wk;   // крок і висота підйому ступні
@@ -57,14 +59,16 @@
       draw('thigh' + s, q.H, R['hip' + s], q.th1, far); draw('shin' + s, q.K, R['knee' + s], q.th2, far);
       draw('foot' + s, q.A, R['ankle' + s], q.pitch, far); return q; };
     // руки махають у протифазі до своєї ноги; лікоть трохи згинається, коли рука йде вперед
-    const armPose = (s, q) => { const sw = (s === 'R' ? 0.2 : 0.14) * o.wk * q.fwd + 0.03 * Math.sin((o.t || 0) * 1.7 + (s === 'L' ? 1 : 0)) * (1 - o.wk);
-      const Sh = add(R['sh' + s], dY), E = add(Sh, rot(sub(R['elbow' + s], R['sh' + s]), sw)), bend = -0.1 - 0.22 * o.wk * Math.max(0, -q.fwd);
+    const armPose = (s, q) => { let sw = (s === 'R' ? 0.2 : 0.14) * o.wk * q.fwd + 0.03 * Math.sin((o.t || 0) * 1.7 + (s === 'L' ? 1 : 0)) * (1 - o.wk);
+      let bend = -0.1 - 0.22 * o.wk * Math.max(0, -q.fwd);
+      const ov = o.arms && o.arms[s]; if (ov) { sw = ov[0]; if (ov[1] !== undefined) bend = ov[1]; }   // задана поза рук (жест)
+      const Sh = add(R['sh' + s], dY), E = add(Sh, rot(sub(R['elbow' + s], R['sh' + s]), sw));
       return { Sh, E, sw, bend, Hd: add(E, rot(sub(R['hand' + s], R['elbow' + s]), sw + bend)) }; };
     const arm = (s, a, far) => { draw('uarm' + s, a.Sh, R['sh' + s], a.sw, far); draw('farm' + s, a.E, R['elbow' + s], a.sw + a.bend, far); };
 
     // порядок (глибина): дальня рука → плече ближньої → обидві ноги (під халатом) → тіло → передпліччя ближньої
     const qL = legPose('L'), qR = legPose('R'), aL = armPose('L', qL), aR = armPose('R', qR);
-    let tr = null;
+    let tr = null, topPt = null;
     if (o.top) {
       // ВЕРХ — цілий намальований малюнок (руки природно намальовані разом із тілом), руки згинаються «м'якими кістками»
       // у шейдері: кожен піксель руки повертається навколо плеча на кут × вагу (ваги — softbones.py), без шва й «наліпки».
@@ -73,10 +77,18 @@
       leg('L', true); leg('R', false);
       const Mt = M.mul(Mroot, M.of(M.t(tp.ox + dY[0], dY[1]), M.s(k, k)));
       L.sprite(tp.tex, 0, 0, { m: Mt, w: tx.w, h: tx.h });                             // тіло (під руками — домальований халат)
-      L.sprite(tp.tex + '_arms', 0, 0, { m: Mt, w: tx.w, h: tx.h, pad: 0.06,            // руки окремим шаром, гнуться кістками
+      L.sprite(tp.tex + '_arms', 0, 0, { m: Mt, w: tx.w, h: tx.h, pad: tp.pad || 0.06,  // руки окремим шаром, гнуться кістками (pad — запас квадрата під піднятою рукою)
         u: { wtex: G.tex(tp.tex + '_arms_w'), wsz: [tx.w, tx.h], bone0: [...uv(tp.near), aR.sw, 1], bone1: [...uv(tp.far), aL.sw, 1], bone2: [...uv(tp.elbow), aR.bend + 0.1, 1] } });
+      if (tp.rigid) {
+        // ближня рука — два жорсткі шматки (tools/make_top.py): плече крутиться навколо плечового суглоба, передпліччя —
+        // навколо ліктя, який їде разом із плечем. Матриці в px текстури: T(суглоб) · R(кут) · T(−суглоб)
+        const turn = (c, a) => M.of(M.t(c[0], c[1]), M.r(a), M.t(-c[0], -c[1]));
+        const Mu = M.mul(Mt, turn(tp.near, aR.sw)), Mf = M.mul(Mu, turn(tp.elbow, aR.bend + 0.1));
+        L.sprite(tp.tex + '__armU', 0, 0, { m: Mu, w: tx.w, h: tx.h });
+        L.sprite(tp.tex + '__armF', 0, 0, { m: Mf, w: tx.w, h: tx.h });
+      }
       // суглоби рук для QA: пряме відображення кісток (плече нерухоме, лікоть і кисть повертаються)
-      const C = (p) => [tp.ox + p[0] * k, p[1] * k + dY[1]], R2 = (p, c, a) => add(c, rot(sub(p, c), a));
+      const C = (p) => [tp.ox + p[0] * k, p[1] * k + dY[1]]; topPt = (p) => at(C(p)); const R2 = (p, c, a) => add(c, rot(sub(p, c), a));
       const eR = R2(tp.elbow, tp.near, aR.sw), hR = R2(R2(tp.handR, tp.elbow, aR.bend + 0.1), tp.near, aR.sw);
       tr = { shR: C(tp.near), elbowR: C(eR), handR: C(hR), shL: C(tp.far), elbowL: C(R2(tp.elbowL, tp.far, aL.sw)), handL: C(R2(tp.handL, tp.far, aL.sw)) };
     } else {
@@ -94,5 +106,25 @@
         j('heel' + s, add(q.A, rot(sub(R['heel' + s], R['ankle' + s]), q.pitch))); j('toe' + s, add(q.A, rot(sub(R['toe' + s], R['ankle' + s]), q.pitch)));
         if (tr) { j('sh' + s, tr['sh' + s]); j('elbow' + s, tr['elbow' + s]); j('hand' + s, tr['hand' + s]); }
         else { j('sh' + s, a.Sh); j('elbow' + s, a.E); j('hand' + s, a.Hd); } } }
+    // точки для реквізиту (ключ у руці Двічі, пробірка Мирона, світіння бороди й очей)
+    return { hand: at(tr ? tr.handR : aR.Hd), ang: o.face * (aR.sw + aR.bend + (tr ? 0.1 : 0)), top: topPt };
+  };
+
+  // Лише ноги, що лежать на підлозі (герой під машиною, видно тільки ноги). Ті самі частини, що й у ходи: нога, повернута
+  // на 90°, носком догори (лежить на спині). o: { x, y — де таз (екран); face: -1 — ноги тягнуться вліво; wig: 0…1 — коліна
+  // підтягуються (він щось крутить там, під машиною); dz — на скільки px дальня нога вище за ближню }
+  P.lying = (name, o) => {
+    const R = RIGS[name], T = (part) => name + '__' + part;
+    for (const [s, far] of [['L', true], ['R', false]]) {
+      const H = R['hip' + s], wig = (o.wig || 0) * (far ? 0.6 : 1);
+      // корінь ноги: таз у (x, y), обертаємо на -90° (вниз → вбік), дзеркалимо face — ступня дивиться в стелю
+      const Mr = M.of(M.t(o.x, o.y - (far ? o.dz || 8 : 0)), M.s(o.face, 1), M.r(-Math.PI / 2), M.t(-H[0], -H[1]));
+      const th1 = -0.45 * wig, th2 = 0.9 * wig;                                        // коліно вгору = стегно вперед, гомілка назад
+      const K = add(H, rot(sub(R['knee' + s], H), th1)), A = add(K, rot(sub(R['ankle' + s], R['knee' + s]), th1 + th2));
+      const draw = (part, J, pivot, th) => { const tx = G.tex(T(part));
+        L.sprite(T(part), 0, 0, { m: M.mul(Mr, M.of(M.t(J[0], J[1]), M.r(th))), w: tx.w, h: tx.h, pivot,
+          u: far ? { tint: [0.78, 0.74, 0.72, 1] } : {} }); };
+      draw('thigh' + s, H, H, th1); draw('shin' + s, K, R['knee' + s], th1 + th2); draw('foot' + s, A, R['ankle' + s], th1 + th2 - 0.4 * wig);
+    }
   };
 })();

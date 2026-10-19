@@ -85,13 +85,17 @@ void main(){ float lit = 0.0;
     L.glow(X(2123), 480, 150, [0.4, 0.7, 1], 0.22 + 0.08 * Math.sin(t * 2.3)); L.star(X(2123), 480, 50 + 6 * Math.sin(t * 2.3), [0.6, 0.85, 1], 0.6);
     axel(ST, t);
     if (ST.key === 'floor') L.star(X(2895), 578, 24 + 6 * Math.sin(t * 5), [1, 0.85, 0.5], 0.9);          // ключ блищить на дні
-    if (ST.mi.st !== 'follow') chair(2460, 0);                                                            // крісло на коліщатках (поки greybox)
+    if (ST.mi.st !== 'follow') chair(2460, 770);                                                          // крісло на коліщатках (поки greybox)
     const toast = age(ST, 'toast'); if (toast >= 0 && toast < 1.4) {                                       // тост вистрілює в стелю
       const q = toast / 1.4, yy = 630 - 900 * q + 700 * q * q; box(2950, yy, 46, 38, [0.8, 0.6, 0.3], 8); }
   }
 
-  function chair(wx, bob) { L.rrect(X(wx - 45), 770 + bob, 90, 22, 8, C.ink, C.ink); L.rrect(X(wx - 40), 690 + bob, 80, 80, 10, [0.45, 0.25, 0.18], [0.35, 0.2, 0.14]);
-    L.solid(X(wx - 4), 790 + bob, 8, 60, C.ink); L.solid(X(wx - 40), 850, 80, 6, C.ink); }
+  // крісло на коліщатках (поки greybox): sy — верх сидіння; спинка — з боку спини того, хто сидить (face — куди дивиться)
+  function chair(wx, sy, face = -1) { const wood = [0.45, 0.25, 0.18], wood2 = [0.35, 0.2, 0.14];
+    L.rrect(X(wx - face * 38 - 9), sy - 120, 18, 126, 8, wood, wood2);                                 // спинка
+    L.rrect(X(wx - 50), sy, 100, 20, 8, wood, wood2);                                                  // сидіння
+    L.solid(X(wx - 4), sy + 20, 8, 862 - sy, C.ink); L.solid(X(wx - 46), 880, 92, 7, C.ink);          // ніжка й хрестовина
+    L.rrect(X(wx - 50), 886, 14, 14, 7, C.ink, C.ink); L.rrect(X(wx + 36), 886, 14, 14, 7, C.ink, C.ink); }   // коліщата
 
   function axel(ST, t) {                                         // Аксель: плаває на одній позначці (підказка до пульта), хвіст хвилею
     const [w, h] = SIZES.axel_anchor, ax = 2895 + 50 * Math.sin(t * 0.7), ay = 545 + 5 * Math.sin(t * 1.9), back = Math.cos(t * 0.7) < 0;
@@ -103,6 +107,20 @@ void main(){ float lit = 0.0;
   // Верх Ліни з якоря (px текстури lina_top): плечі — корені кісток рук, лікоть, кисті; ox — зсув, щоб ступні якоря
   // збіглися з ногами маріонетки (виміряно: середина ступнів якоря 80.3 px, ніг маріонетки 64.5 px)
   const LINA_TOP = { tex: 'lina_top', ox: -15.8, near: [398, 367], far: [138, 367], elbow: [425, 622], handR: [443, 822], elbowL: [138, 640], handL: [138, 827] };
+  // Двічі й Мирон — так само (tools/make_top.py + art/softbones.json); ox — щоб ноги маріонетки стали під ступні якоря.
+  // rigid — ближня рука жорсткими шматками (великі жести: замах ключем, пробірка до рота), дальня — м'якими кістками
+  const DVICHI_TOP = { tex: 'dvichi_top', ox: -34.7, near: [578, 330], far: [112, 333], elbow: [650, 520], handR: [700, 790], elbowL: [87, 563], handL: [67, 823], rigid: 1 };
+  const MIRON_TOP = { tex: 'miron_top', ox: -24.6, near: [440, 330], far: [106, 314], elbow: [495, 505], handR: [555, 770], elbowL: [91, 534], handL: [91, 774], rigid: 1 };
+  const MI_PX = { eyeN: [304, 101], eyeF: [347, 96], beard: [351, 214] };   // точки на текстурі верху Мирона: очі, борода
+  // ключові кадри → значення (лінійно з плавним входом-виходом), K = [[час, значення], ...]
+  const kf = (K, x) => { if (x <= K[0][0]) return K[0][1]; for (let i = 1; i < K.length; i++) if (x <= K[i][0]) {
+    const q = (x - K[i - 1][0]) / (K[i][0] - K[i - 1][0]), e = q * q * (3 - 2 * q); return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * e; }
+    return K[K.length - 1][1]; };
+  // замах ключем (кут плеча; мінус = рука вперед-угору): два удари — у 0.4 і 0.9 с, як події 'hit' у sim.js
+  const HIT = [[0, 0], [0.25, -2.7], [0.4, -1.75], [0.65, -2.7], [0.9, -1.75], [1.3, -0.3], [1.6, 0]];
+  // ковток: рука з пробіркою до рота (0.3 с), сьорбає (0.5 с), опускає (0.4 с); s = 0 рука внизу … 1 пробірка біля рота
+  const SIP = [[0, 0], [0.3, 1], [0.8, 1], [1.2, 0]];
+  let miPts = null;                                              // де зараз очі й борода Мирона (для світіння в темряві)
 
   // ---------- герої (greybox: капсули з підписами; силуети різні, як у characters.md) ----------
   function people(ST, t) {
@@ -112,25 +130,37 @@ void main(){ float lit = 0.0;
     if (!ST.light || ST.phase === 'pro') { const z = (t * 0.5) % 1, zs = 34 + 40 * z;   // олівцеві «z-z-Z» спливають над головою
       L.sprite('p_zzz', X(400 + 40 * z), 500 - 90 * z - zs, { w: zs * 1.2, h: zs, u: { alpha: 0.85 * Math.sin(Math.PI * z) } }); }
 
-    // Двічі — квадратний; спершу видно лише ноги з-під машини
-    const d = ST.dv;
-    if (d.st === 'legs') { const k = Math.sin(t * 6) > 0.6 ? 6 : 0;                                    // ноги ворушаться — він щось крутить
-      box(2080, 885 - k, 100, 26, [0.24, 0.27, 0.32], 10); box(2080, 920, 100, 26, [0.24, 0.27, 0.32], 10);
-      box(2050, 880 - k, 40, 36, [0.35, 0.22, 0.12], 10); box(2050, 915, 40, 36, [0.35, 0.22, 0.12], 10); tag('n_dv', 'Двічі', 2140, 985, 20, 0.6); }
-    else { const hit = d.st === 'hit' ? ST.t - d.t0 : 9, sw = (hit < 0.4 ? hit / 0.4 : hit < 0.5 ? 1 : hit < 0.9 ? (hit - 0.5) / 0.4 : 0) * 1.4;
-      box(d.x - 75, d.y - 230, 150, 200, C.coat, 24); box(d.x - 70, d.y - 40, 60, 40, [0.24, 0.27, 0.32], 8); box(d.x + 10, d.y - 40, 60, 40, [0.24, 0.27, 0.32], 8);
-      box(d.x - 45, d.y - 320, 90, 90, [0.85, 0.65, 0.5], 40); box(d.x - 40, d.y - 330, 80, 22, [0.25, 0.3, 0.3], 10);   // голова й гогли
-      L.solid(X(d.x - 60), d.y - 190, 14, 120, C.metal, -0.4 - sw, 7, 0);                                  // ключ у руці (замах)
+    // Двічі — маріонетка: лежить під машиною (видно лише ноги) → вилазить → іде до щитка → б'є ключем двічі
+    const d = ST.dv, da = ST.t - d.t0;
+    if (d.st === 'legs' || (d.st === 'out' && da < 0.6)) {
+      const q = d.st === 'out' ? da / 0.6 : 0, wig = d.st === 'legs' ? Math.max(0, Math.sin(t * 6)) ** 3 : 0;   // коліна смикаються — щось крутить
+      PUPPET.lying('dvichi', { x: X(2215 - 80 * q), y: 914, face: -1, wig });
+      L.shadow(X(2240 - 80 * q), 906, 64, 30, 0.9);                                                     // темна щілина під машиною ховає таз
+      tag('n_dv', 'Двічі', 2140, 985, 20, 0.6); }
+    else {
+      const up = d.st === 'out' ? da - 0.6 : 9;                                                         // щойно підвівся: пил з-під ніг
+      if (up < 0.5) for (let j = 0; j < 4; j++) L.ring(X(d.x - 60 + j * 40), 900 - 30 * up, 14 + 50 * up, 8 + 20 * up, [0.8, 0.7, 0.55], 0.5 * (1 - up / 0.5));
+      const arms = d.st === 'hit' ? { R: [kf(HIT, da), -0.25] } : null;
+      L.shadow(X(d.x), 896, 80, 16, 0.35);
+      const P = PUPPET.walker('dvichi', { x: X(d.x), y: d.st === 'out' ? 900 : d.y, face: -1, dist: Math.abs(2150 - d.x), wk: d.st === 'walk' ? 1 : 0,
+        cycle: 150, lift: 20, t, arms, top: DVICHI_TOP });
+      L.sprite('it_wrench', P.hand[0] - 14, P.hand[1] - 12, { w: 28, h: 80, rot: P.ang, pivot: [14, 12] });   // ключ у руці: росте з кулака вздовж передпліччя
       tag('n_dv', 'Двічі', d.x, d.y + 30, 20, 0.6); }
 
-    // Мирон — довгий плащ-трикутник, борода світиться фіолетовим після трьох ковтків
-    const m = ST.mi, rid = m.st === 'follow' ? 1 : 0, mb = rid ? Math.sin(t * 3) * 3 : 0;
-    if (rid) chair(m.x, -60);
-    box(m.x - 60, 420 - rid * 60 + mb, 120, 440 - rid * 120, [0.48, 0.48, 0.46], 26);
-    box(m.x - 38, 360 - rid * 60 + mb, 76, 76, [0.85, 0.65, 0.5], 36);
-    box(m.x - 30, 420 - rid * 60 + mb, 60, 110, m.lit ? [0.62, 0.35, 0.95] : [0.22, 0.16, 0.12], 26);
-    box(m.x + 50, 430 - rid * 60 + mb, 16, 70, [0.55, 0.3, 0.75], 8);                                     // пробірка
-    tag('n_mi', 'Мирон', m.x, 900, 20, 0.6);
+    // Мирон — маріонетка з пробіркою в руці: сьорбає (після кожного ковтка Ліни й зрідка сам), іде до крісла й їде на ньому
+    const m = ST.mi, rid = m.st === 'follow', sa = age(ST, 'sip'), mface = rid ? (ST.lx < m.x ? -1 : 1) : -1;
+    const own = (t % 7.3) / 1.2;                                                                        // «для себе» — раз на ~7 с
+    const sp = sa >= 0 && sa < 1.2 ? kf(SIP, sa) : m.st === 'stand' && own < 1 ? kf(SIP, own * 1.2) * 0.8 : 0;
+    if (rid) chair(m.x - 14 * mface, 760, mface);                                                       // їде, стоячи на хрестовині крісла, як на самокаті
+    L.shadow(X(m.x), 896, 70, 15, 0.35);
+    // ковток: плече вперед-угору (лікоть піднятий), передпліччя через груди — кисть із пробіркою біля рота (кути пораховані
+    // за двома довжинами руки, як IK); sp плавно веде від опущеної руки до рота
+    const MP = PUPPET.walker('miron', { x: X(m.x), y: rid ? 876 + Math.sin(t * 3) * 2 : 900, face: mface, dist: Math.abs(3185 - m.x),
+      wk: m.st === 'tochair' && ST.t - m.t0 > 1.2 ? 1 : 0, cycle: 210, t, arms: { R: [-1.7 * sp, -0.1 - 2.44 * sp] }, top: MIRON_TOP });
+    L.sprite('it_tube', MP.hand[0] - 9, MP.hand[1] - 40, { w: 18, h: 80, rot: MP.ang, pivot: [9, 40] });   // пробірка в пальцях
+    miPts = { eyeN: MP.top(MI_PX.eyeN), eyeF: MP.top(MI_PX.eyeF), beard: MP.top(MI_PX.beard) };
+    if (m.lit) { const b = miPts.beard; L.glow(b[0], b[1], 150, [0.65, 0.35, 1], 0.45 + 0.1 * Math.sin(t * 3)); }   // борода світиться фіолетовим
+    tag('n_mi', 'Мирон', m.x, 925, 20, 0.6);
     // Ліна — маріонетка з намальованих частин (live/puppet.js): хода з кроками, що не ковзають, і махом рук
     const hop = ST.phase === 'pro' ? Math.max(0, Math.sin(Math.min(1, Math.max(0, (ST.pt - PRO.JUMP) / 0.5)) * Math.PI)) * 90 : 0;
     L.shadow(X(ST.lx), ST.ly - 4, 70, 14, 0.35 * (1 - hop / 180));                                   // м'яка тінь під ногами
@@ -149,9 +179,9 @@ void main(){ float lit = 0.0;
     const u = []; Ls.slice(0, 10).forEach((l) => u.push(...l)); while (u.length < 40) u.push(0, 0, 1, 0);
     G.full(L.P.dark, { u_L: u, u_n: Math.min(10, Ls.length), u_dark: dk, u_t: t });
     L.glow(X(2123), 480, 420, [0.25, 0.45, 0.9], 0.35 * dk); L.glow(X(2895), 535, 200, [0.3, 0.6, 0.7], 0.25 * dk);
-    if (ST.mi.lit) L.glow(X(ST.mi.x), 470, 380, [0.6, 0.3, 0.95], 0.45 * dk);
+    if (ST.mi.lit) L.glow(miPts.beard[0], miPts.beard[1], 380, [0.6, 0.3, 0.95], 0.45 * dk);
     else { const bl = Math.sin(t * 0.9) > 0.97 ? 0 : 1;           // очі Мирона світяться в темряві (і зрідка кліпають)
-      L.glow(X(ST.mi.x - 14), 392, 14, [1, 0.9, 0.6], 0.9 * dk * bl); L.glow(X(ST.mi.x + 14), 392, 14, [1, 0.9, 0.6], 0.9 * dk * bl); }
+      L.glow(miPts.eyeN[0], miPts.eyeN[1], 12, [1, 0.9, 0.6], 0.9 * dk * bl); L.glow(miPts.eyeF[0], miPts.eyeF[1], 10, [1, 0.9, 0.6], 0.8 * dk * bl); }
   }
 
   // ---------- ефекти з подій (S.ev): кожна подія має свій «сік» (juice) ----------
