@@ -218,19 +218,19 @@
       S.introT = S.t; say(S, 'lina', '💡 ?', 2.4); }                  // мета з першої секунди: «треба світло»
   }
 
-  // ---------- демо (attract): «бот» проходить шлях I-A з парою помилок для сміху ----------
+  // ---------- демо (attract): «бот» проходить шлях I-A з парою помилок для сміху, наступне коло — шлях I-B ----------
   const ROUTE_A = [{ v: 'use', id: 'fuse' }, { v: 'use', id: 'aka' }, { v: 'give', id: 'aqua', item: 'ruler' },
     { v: 'use', id: 'keyfloor' }, { v: 'give', id: 'legs', item: 'key' }];
   const ROUTE_B = [{ v: 'use', id: 'miron' }, { v: 'use', id: 'miron' }, { v: 'use', id: 'miron' }, { v: 'use', id: 'fuse' }];
   const idle = (S) => S.phase !== 'pro' && S.tx === null && S.busy <= S.t && S.t - S.botT > 1.6;
   const botInput = (route) => (t, S) => (S && idle(S) && S.botI < route.length ? { cmd: route[S.botI], cmdI: S.botI } : {});
-  const scriptInput = botInput(ROUTE_A);
+  const scriptInput = botInput(ROUTE_A), scriptInputB = botInput(ROUTE_B);   // демо чергує шляхи: коло 1 — I-A, коло 2 — I-B
 
   let cache = null;
   function at(t) {
     const loop = Math.floor(t / L), q = t - loop * L, n = Math.round(q / DT);
     if (!cache || cache.loop !== loop || cache.S.steps > n) cache = { loop, S: Object.assign(create(), { wt0: loop * L }) };
-    const S = cache.S; while (S.steps < n) step(S, scriptInput(S.t, S));
+    const S = cache.S, inp = loop % 2 ? scriptInputB : scriptInput; while (S.steps < n) step(S, inp(S.t, S));
     return Object.assign({}, S, { loop, q });
   }
 

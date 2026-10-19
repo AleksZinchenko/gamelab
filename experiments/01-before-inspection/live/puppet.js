@@ -28,7 +28,8 @@
 
   // Намалювати ходока. o: { x, y — точка між ступнями на екрані; face: 1 вправо / -1 вліво; dist — пройдена відстань;
   // wk — 0 стоїть … 1 іде; cycle — довжина циклу (два кроки) у px; id — ім'я для QA-трасування; lift; t — час;
-  // arms: { R: [мах, згин ліктя], L: [мах] } — поза рук замість маху ходи (замах ключем, ковток з пробірки) }
+  // arms: { R: [мах, згин ліктя], L: [мах] } — поза рук замість маху ходи (замах ключем, ковток з пробірки);
+  // armBlend: 0…1 — наскільки ближню руку показує повна рука з аркуша частин замість руки з якоря (на час жесту) }
   // Повертає точки для реквізиту: hand — кисть ближньої руки (екран), ang — кут передпліччя, top(p) — px текстури верху → екран.
   P.walker = (name, o) => {
     const R = RIGS[name], T = (part) => name + '__' + part;
@@ -38,12 +39,18 @@
     const Mroot = M.of(M.t(o.x, o.y), M.s(o.face, 1), M.t(-cx, -R.h));
     const at = (pt) => M.ap(Mroot, pt);
     // куди ставимо щиколотки + наскільки опустити таз, щоб опорна нога не «розтягувалась» (таз їде на опорній нозі)
+    // Ноги ближче до центру тіла: на картинці герой стоїть ширше, ніж ходять. Без цього зсув між ногами лишається й у ході —
+    // одна нога весь час «попереду», виходить приставний крок. Стоячи зводимо на 35%, у ході — на 85% (сліди майже на одній
+    // лінії, ноги перехрещуються, як у справжній ході в профіль). neutral — точно як намальовано (еталон для QA).
+    const hc = (R.hipL[0] + R.hipR[0]) / 2, nar = o.neutral ? 0 : 0.35 + 0.5 * o.wk;
+    const sx = { L: -(R.hipL[0] - hc) * nar, R: -(R.hipR[0] - hc) * nar };
     const pose = {}; let drop = 0;
     for (const s of ['L', 'R']) {
-      // стоячи ноги трохи ширше за стегна (природна стійка, не «струнко»); neutral — точно як намальовано (еталон для QA)
+      // стоячи ступні трохи ширше за (зведені) стегна — природна стійка, не «струнко»
       const spread = o.neutral ? 0 : (s === 'L' ? -9 : 9) * (1 - o.wk);
-      const f = footPath(legs[s], S, lift), A = [R['ankle' + s][0] + f.dx + spread, R['ankle' + s][1] + f.dy];
-      const H = R['hip' + s], tl = len(sub(R['knee' + s], H)), sl = len(sub(R['ankle' + s], R['knee' + s])), reach = (tl + sl) * 0.985;
+      const f = footPath(legs[s], S, lift), A = [R['ankle' + s][0] + f.dx + sx[s] + spread, R['ankle' + s][1] + f.dy];
+      // reach < довжини ноги: таз трохи нижче, коліна в опорі ледь зігнуті (пряма «ходуля» виглядає дерев'яно)
+      const H = add(R['hip' + s], [sx[s], 0]), tl = len(sub(R['knee' + s], R['hip' + s])), sl = len(sub(R['ankle' + s], R['knee' + s])), reach = (tl + sl) * (0.985 - 0.04 * o.wk);
       const dx = A[0] - H[0], need = (A[1] - H[1]) - Math.sqrt(Math.max(0, reach * reach - dx * dx));
       drop = Math.max(drop, need); pose[s] = { f, A, tl, sl };
     }
@@ -52,7 +59,7 @@
       const tx = G.tex(T(part));
       L.sprite(T(part), 0, 0, { m: M.mul(Mroot, M.of(M.t(J[0], J[1]), M.r(th))), w: tx.w, h: tx.h, pivot,
         u: far ? { tint: [0.78, 0.74, 0.72, 1] } : {} }); };
-    const legPose = (s) => { const H = add(R['hip' + s], dY), p = pose[s], K = ik(H, p.A, p.tl, p.sl);
+    const legPose = (s) => { const H = add(add(R['hip' + s], [sx[s], 0]), dY), p = pose[s], K = ik(H, p.A, p.tl, p.sl);
       return { H, K, A: p.A, th1: ang(sub(K, H)) - ang(sub(R['knee' + s], R['hip' + s])),
         th2: ang(sub(p.A, K)) - ang(sub(R['ankle' + s], R['knee' + s])), pitch: p.f.pitch, fwd: p.f.fwd }; };
     const leg = (s, far) => { const q = legPose(s);
@@ -68,14 +75,15 @@
 
     // порядок (глибина): дальня рука → плече ближньої → обидві ноги (під халатом) → тіло → передпліччя ближньої
     const qL = legPose('L'), qR = legPose('R'), aL = armPose('L', qL), aR = armPose('R', qR);
-    let tr = null, topPt = null;
+    let tr = null, topPt = null, sheetHand = null;
     if (o.top) {
       // ВЕРХ — цілий намальований малюнок (руки природно намальовані разом із тілом), руки згинаються «м'якими кістками»
       // у шейдері: кожен піксель руки повертається навколо плеча на кут × вагу (ваги — softbones.py), без шва й «наліпки».
       // Ноги — окремі частини під халатом (малюємо раніше, халат їх накриває).
       const tp = o.top, tx = G.tex(tp.tex), k = R.h / tx.h, uv = (p) => [p[0] / tx.w, p[1] / tx.h];
-      leg('L', true); leg('R', false);
       const Mt = M.mul(Mroot, M.of(M.t(tp.ox + dY[0], dY[1]), M.s(k, k)));
+      if (tp.back) L.sprite(tp.tex + '__back', 0, 0, { m: Mt, w: tx.w, h: tx.h });   // підкладка спинки халата — позаду ніг
+      leg('L', true); leg('R', false);
       L.sprite(tp.tex, 0, 0, { m: Mt, w: tx.w, h: tx.h });                             // тіло (під руками — домальований халат)
       L.sprite(tp.tex + '_arms', 0, 0, { m: Mt, w: tx.w, h: tx.h, pad: tp.pad || 0.06,  // руки окремим шаром, гнуться кістками (pad — запас квадрата під піднятою рукою)
         u: { wtex: G.tex(tp.tex + '_arms_w'), wsz: [tx.w, tx.h], bone0: [...uv(tp.near), aR.sw, 1], bone1: [...uv(tp.far), aL.sw, 1], bone2: [...uv(tp.elbow), aR.bend + 0.1, 1] } });
@@ -83,9 +91,23 @@
         // ближня рука — два жорсткі шматки (tools/make_top.py): плече крутиться навколо плечового суглоба, передпліччя —
         // навколо ліктя, який їде разом із плечем. Матриці в px текстури: T(суглоб) · R(кут) · T(−суглоб)
         const turn = (c, a) => M.of(M.t(c[0], c[1]), M.r(a), M.t(-c[0], -c[1]));
-        const Mu = M.mul(Mt, turn(tp.near, aR.sw)), Mf = M.mul(Mu, turn(tp.elbow, aR.bend + 0.1));
-        L.sprite(tp.tex + '__armU', 0, 0, { m: Mu, w: tx.w, h: tx.h });
-        L.sprite(tp.tex + '__armF', 0, 0, { m: Mf, w: tx.w, h: tx.h });
+        const Mu = M.mul(Mt, turn(tp.near, aR.sw)), Mf = M.mul(Mu, turn(tp.elbow, aR.bend + 0.1)), bl = o.armBlend || 0;
+        if (bl < 1) { L.sprite(tp.tex + '__armU', 0, 0, { m: Mu, w: tx.w, h: tx.h, u: { alpha: 1 - bl } });
+          L.sprite(tp.tex + '__armF', 0, 0, { m: Mf, w: tx.w, h: tx.h, u: { alpha: 1 - bl } }); }
+        if (bl > 0) {
+          // На час жесту (замах, ковток) плавно підміняємо руку з якоря ПОВНОЮ рукою з аркуша частин: у ракурсі 3/4 з якоря
+          // видно лише вузьку смужку рукава (решта за тілом), і відведена від тіла вона виглядає «сухою».
+          // Рука з аркуша: плече — у плечовому суглобі якоря, масштаб — під довжину руки якоря, кути — від того самого
+          // спокою (δu, δf — різниця напрямків рукава на аркуші й на якорі), тож жест той самий.
+          const Cj = (p) => [tp.ox + p[0] * k, p[1] * k + dY[1]], J = Cj(tp.near);
+          const sc = (len(sub(tp.handR, tp.elbow)) + len(sub(tp.elbow, tp.near))) * k / (len(sub(R.handR, R.elbowR)) + len(sub(R.elbowR, R.shR)));
+          const du = ang(sub(tp.elbow, tp.near)) - ang(sub(R.elbowR, R.shR)), df = ang(sub(tp.handR, tp.elbow)) - ang(sub(R.handR, R.elbowR));
+          const a1 = aR.sw + du, a2 = aR.sw + aR.bend + 0.1 + df, E = add(J, rot(sub(R.elbowR, R.shR), a1).map((v) => v * sc));
+          const part = (n, P, piv, a) => { const t2 = G.tex(T(n));
+            L.sprite(T(n), 0, 0, { m: M.mul(Mroot, M.of(M.t(P[0], P[1]), M.s(sc, sc), M.r(a))), w: t2.w, h: t2.h, pivot: piv, u: { alpha: bl } }); };
+          part('uarmR', J, R.shR, a1); part('farmR', E, R.elbowR, a2);
+          sheetHand = add(E, rot(sub(R.handR, R.elbowR), a2).map((v) => v * sc));
+        }
       }
       // суглоби рук для QA: пряме відображення кісток (плече нерухоме, лікоть і кисть повертаються)
       const C = (p) => [tp.ox + p[0] * k, p[1] * k + dY[1]]; topPt = (p) => at(C(p)); const R2 = (p, c, a) => add(c, rot(sub(p, c), a));
@@ -107,24 +129,27 @@
         if (tr) { j('sh' + s, tr['sh' + s]); j('elbow' + s, tr['elbow' + s]); j('hand' + s, tr['hand' + s]); }
         else { j('sh' + s, a.Sh); j('elbow' + s, a.E); j('hand' + s, a.Hd); } } }
     // точки для реквізиту (ключ у руці Двічі, пробірка Мирона, світіння бороди й очей)
-    return { hand: at(tr ? tr.handR : aR.Hd), ang: o.face * (aR.sw + aR.bend + (tr ? 0.1 : 0)), top: topPt };
+    // кисть: з руки аркуша, коли жест показує її (armBlend > 0.5), інакше з якоря
+    const hand = sheetHand && o.armBlend > 0.5 ? sheetHand : tr ? tr.handR : aR.Hd;
+    return { hand: at(hand), ang: o.face * (aR.sw + aR.bend + (tr ? 0.1 : 0)), top: topPt };
   };
 
-  // Лише ноги, що лежать на підлозі (герой під машиною, видно тільки ноги). Ті самі частини, що й у ходи: нога, повернута
-  // на 90°, носком догори (лежить на спині). o: { x, y — де таз (екран); face: -1 — ноги тягнуться вліво; wig: 0…1 — коліна
-  // підтягуються (він щось крутить там, під машиною); dz — на скільки px дальня нога вище за ближню }
+  // Лише ноги, що стирчать з-під машини НА ГЛЯДАЧА (герой лежить на спині під машиною). Ті самі частини, що й у ходи:
+  // нога «звисає» вниз по екрану, але вкорочена по вертикалі (ракурс — вона лежить на підлозі до нас), черевик носком
+  // догори. o: { x, y — де ноги виходять з-під машини (екран); gap — відстань між ногами; wig: 0…1 — ступні ворушаться;
+  // tap — фаза, щоб ступні ворушились не в такт }
   P.lying = (name, o) => {
-    const R = RIGS[name], T = (part) => name + '__' + part;
-    for (const [s, far] of [['L', true], ['R', false]]) {
-      const H = R['hip' + s], wig = (o.wig || 0) * (far ? 0.6 : 1);
-      // корінь ноги: таз у (x, y), обертаємо на -90° (вниз → вбік), дзеркалимо face — ступня дивиться в стелю
-      const Mr = M.of(M.t(o.x, o.y - (far ? o.dz || 8 : 0)), M.s(o.face, 1), M.r(-Math.PI / 2), M.t(-H[0], -H[1]));
-      const th1 = -0.45 * wig, th2 = 0.9 * wig;                                        // коліно вгору = стегно вперед, гомілка назад
-      const K = add(H, rot(sub(R['knee' + s], H), th1)), A = add(K, rot(sub(R['ankle' + s], R['knee' + s]), th1 + th2));
-      const draw = (part, J, pivot, th) => { const tx = G.tex(T(part));
-        L.sprite(T(part), 0, 0, { m: M.mul(Mr, M.of(M.t(J[0], J[1]), M.r(th))), w: tx.w, h: tx.h, pivot,
-          u: far ? { tint: [0.78, 0.74, 0.72, 1] } : {} }); };
-      draw('thigh' + s, H, H, th1); draw('shin' + s, K, R['knee' + s], th1 + th2); draw('foot' + s, A, R['ankle' + s], th1 + th2 - 0.4 * wig);
+    const R = RIGS[name], T = (part) => name + '__' + part, F = o.fore || 0.55;   // F — вкорочення ніг у ракурсі
+    for (const [s, dx, far] of [['L', -(o.gap || 46) / 2, true], ['R', (o.gap || 46) / 2, false]]) {
+      const H = R['hip' + s], K = R['knee' + s], A = R['ankle' + s];
+      const Ml = M.of(M.t(o.x + dx, o.y), M.s(1, F), M.t(-H[0], -H[1]));          // нога у своїх px, вкорочена по y
+      const u = far ? { tint: [0.78, 0.74, 0.72, 1] } : {};
+      for (const part of ['thigh', 'shin']) { const tx = G.tex(T(part + s));
+        L.sprite(T(part + s), 0, 0, { m: Ml, w: tx.w, h: tx.h, u }); }
+      // черевик — без вкорочення, носком угору; ворушиться навколо щиколотки (лікті «крутять» щось там, під машиною)
+      const ank = M.ap(Ml, A), tx = G.tex(T('foot' + s));
+      const sway = (o.wig || 0) * 0.35 * Math.sin((o.tap || 0) + (far ? 2.1 : 0));
+      L.sprite(T('foot' + s), 0, 0, { m: M.of(M.t(ank[0], ank[1]), M.r(-Math.PI / 2 + sway), M.t(-A[0], -A[1])), w: tx.w, h: tx.h, u });
     }
   };
 })();

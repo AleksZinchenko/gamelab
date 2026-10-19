@@ -23,6 +23,7 @@ const load = (src) => new Promise((res, rej) => { const s = document.createEleme
   // sizes.js: window.SIZES (display size per sprite in view px, engine.md §7); audio.js: sound from the event bus (stub until used)
   for (const f of ['assets.js', 'sizes.js', 'gl.js', 'lib.js', 'rigs.js', 'puppet.js', 'story.js', 'sim.js', 'scene.js', 'audio.js']) await load(f);
   const q = new URLSearchParams(location.search), render = q.has('render');
+  SCENE.CAST = q.has('cast');                                                          // ?cast=1 — вітрина анімацій усіх героїв
   const VW = (SIM.VIEW || {}).W || 1920, VH = (SIM.VIEW || {}).H || 1080;             // view size and aspect come from the sim
   document.documentElement.style.setProperty('--ar', VW / VH); if (SIM.HINT) document.getElementById('hint').textContent = SIM.HINT;
   G.init(document.getElementById('c'), VW, VH);

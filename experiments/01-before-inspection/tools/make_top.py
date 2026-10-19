@@ -3,14 +3,15 @@
 # прибираємо — їх малюють частини маріонетки (tools/rig_lr.py), що крокують під халатом.
 #   python tools/make_top.py NAME --cut0 Y --cut1 Y
 #   cut0..cut1 (px якоря) — смуга нижнього краю поли: тут лишаємо лише світлі пікселі (тканина халата), темні штани прибираємо;
-#   нижче cut1 — прибираємо все. Полігони рук у softbones.json — у px ВИХОДУ (якір, обрізаний по силуету з полем 3 px).
+#   нижче cut1 — прибираємо все. --belt Y: від пояса вниз прибираємо й темні штани між полами халата (велика темна пляма,
+#   що дотикається до низу) — там видно стегна маріонетки, які крокують, а не намальовані нерухомі. Полігони рук у softbones.json — у px ВИХОДУ (якір, обрізаний по силуету з полем 3 px).
 # Пише art/gen/NAME_top.png, art/gen/NAME_top_arms.png (+ art/src/NAME_top_orig.png для довідки) і друкує середину ступнів
 # якоря (px виходу) — з неї в scene.js рахуємо зсув ox, щоб ноги маріонетки стали під ступні якоря.
 import argparse, json
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('--cut0', type=int, required=True)
-ap.add_argument('--cut1', type=int, required=True); a = ap.parse_args()
+ap.add_argument('--cut1', type=int, required=True); ap.add_argument('--belt', type=int, default=0); a = ap.parse_args()
 A = np.array(Image.open(f'art/gen/{a.name}_anchor.png').convert('RGBA')).astype(np.float32)
 B = np.array(Image.open(f'art/src/{a.name}_noarms.png').convert('RGBA')).astype(np.float32)
 # Meshy при редагуванні буває зсуває малюнок на піксель-два: шукаємо зсув, за якого голова збігається найкраще
@@ -24,6 +25,19 @@ x0, y0, x1, y1 = xs.min() - 3, ys.min() - 3, xs.max() + 4, ys.max() + 1
 A, B = A[y0:y1, x0:x1].copy(), B[y0:y1, x0:x1].copy(); H, W = A.shape[:2]
 c0, c1 = a.cut0 - y0, a.cut1 - y0
 lum = lambda I: I[:, :, :3] @ np.array([0.3, 0.55, 0.15], np.float32) / 255
+from scipy import ndimage
+if a.belt:                                               # штани між полами: темні пікселі від пояса до низу, зв'язані з низом
+    dark = np.zeros((H, W), bool); dark[a.belt - y0:c1] = lum(B)[a.belt - y0:c1] < 0.42
+    dark &= A[:, :, 3] > 60; lab, n = ndimage.label(ndimage.binary_opening(dark, iterations=2))
+    keep = set(np.unique(lab[c1 - 3:c1][lab[c1 - 3:c1] > 0]))          # плями, що доходять до нижнього краю поли
+    pants = ndimage.binary_dilation(np.isin(lab, list(keep)), iterations=2) & (np.arange(H)[:, None] >= a.belt - y0)
+    # підкладка спинки халата (шар ПОЗАДУ ніг): на місці штанів — колір найближчої тканини халата, у тіні (×0.45), до поли
+    inner = pants & (np.arange(H)[:, None] < c0)
+    _, (iy, ix) = ndimage.distance_transform_edt(pants | (B[:, :, 3] < 60), return_indices=True)
+    back = np.zeros_like(B); back[inner, :3] = B[iy[inner], ix[inner], :3] * 0.45; back[inner, 3] = 255
+    Image.fromarray(back.astype(np.uint8)).save(f'art/gen/{a.name}_top__back.png')
+    for I in (A, B): I[pants, 3] = 0
+    print('pants px', int(pants.sum()))
 for I in (A, B):
     band = np.zeros((H, W), bool); band[c0:c1] = True
     I[band & (lum(I) < 0.42), 3] = 0                      # у смузі поли: темне (штани, тінь між ногами) — геть

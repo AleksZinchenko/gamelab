@@ -85,17 +85,13 @@ void main(){ float lit = 0.0;
     L.glow(X(2123), 480, 150, [0.4, 0.7, 1], 0.22 + 0.08 * Math.sin(t * 2.3)); L.star(X(2123), 480, 50 + 6 * Math.sin(t * 2.3), [0.6, 0.85, 1], 0.6);
     axel(ST, t);
     if (ST.key === 'floor') L.star(X(2895), 578, 24 + 6 * Math.sin(t * 5), [1, 0.85, 0.5], 0.9);          // ключ блищить на дні
-    if (ST.mi.st !== 'follow') chair(2460, 770);                                                          // крісло на коліщатках (поки greybox)
+    if (ST.mi.st !== 'follow') chair(2460);                                                               // крісло на коліщатках
     const toast = age(ST, 'toast'); if (toast >= 0 && toast < 1.4) {                                       // тост вистрілює в стелю
       const q = toast / 1.4, yy = 630 - 900 * q + 700 * q * q; box(2950, yy, 46, 38, [0.8, 0.6, 0.3], 8); }
   }
 
-  // крісло на коліщатках (поки greybox): sy — верх сидіння; спинка — з боку спини того, хто сидить (face — куди дивиться)
-  function chair(wx, sy, face = -1) { const wood = [0.45, 0.25, 0.18], wood2 = [0.35, 0.2, 0.14];
-    L.rrect(X(wx - face * 38 - 9), sy - 120, 18, 126, 8, wood, wood2);                                 // спинка
-    L.rrect(X(wx - 50), sy, 100, 20, 8, wood, wood2);                                                  // сидіння
-    L.solid(X(wx - 4), sy + 20, 8, 862 - sy, C.ink); L.solid(X(wx - 46), 880, 92, 7, C.ink);          // ніжка й хрестовина
-    L.rrect(X(wx - 50), 886, 14, 14, 7, C.ink, C.ink); L.rrect(X(wx + 36), 886, 14, 14, 7, C.ink, C.ink); }   // коліщата
+  // крісло на коліщатках (намальоване): wx — де стоїть ніжка (0.595 ширини малюнка), коліщата на підлозі
+  function chair(wx) { const [w, h] = SIZES.chair; L.sprite('chair', X(wx) - 0.595 * w, 900 - h, { w, h }); }
 
   function axel(ST, t) {                                         // Аксель: плаває на одній позначці (підказка до пульта), хвіст хвилею
     const [w, h] = SIZES.axel_anchor, ax = 2895 + 50 * Math.sin(t * 0.7), ay = 545 + 5 * Math.sin(t * 1.9), back = Math.cos(t * 0.7) < 0;
@@ -106,11 +102,11 @@ void main(){ float lit = 0.0;
 
   // Верх Ліни з якоря (px текстури lina_top): плечі — корені кісток рук, лікоть, кисті; ox — зсув, щоб ступні якоря
   // збіглися з ногами маріонетки (виміряно: середина ступнів якоря 80.3 px, ніг маріонетки 64.5 px)
-  const LINA_TOP = { tex: 'lina_top', ox: -15.8, near: [398, 367], far: [138, 367], elbow: [425, 622], handR: [443, 822], elbowL: [138, 640], handL: [138, 827] };
+  const LINA_TOP = { tex: 'lina_top', ox: -15.8, near: [398, 367], far: [138, 367], elbow: [425, 622], handR: [443, 822], elbowL: [138, 640], handL: [138, 827], back: 1 };
   // Двічі й Мирон — так само (tools/make_top.py + art/softbones.json); ox — щоб ноги маріонетки стали під ступні якоря.
   // rigid — ближня рука жорсткими шматками (великі жести: замах ключем, пробірка до рота), дальня — м'якими кістками
-  const DVICHI_TOP = { tex: 'dvichi_top', ox: -34.7, near: [578, 330], far: [112, 333], elbow: [650, 520], handR: [700, 790], elbowL: [87, 563], handL: [67, 823], rigid: 1 };
-  const MIRON_TOP = { tex: 'miron_top', ox: -24.6, near: [440, 330], far: [106, 314], elbow: [495, 505], handR: [555, 770], elbowL: [91, 534], handL: [91, 774], rigid: 1 };
+  const DVICHI_TOP = { tex: 'dvichi_top', ox: -34.7, near: [578, 330], far: [112, 333], elbow: [650, 520], handR: [700, 790], elbowL: [87, 563], handL: [67, 823], rigid: 1, back: 1 };
+  const MIRON_TOP = { tex: 'miron_top', ox: -14.4, near: [440, 330], far: [106, 314], elbow: [495, 505], handR: [555, 770], elbowL: [91, 534], handL: [91, 774], rigid: 1, back: 1 };
   const MI_PX = { eyeN: [304, 101], eyeF: [347, 96], beard: [351, 214] };   // точки на текстурі верху Мирона: очі, борода
   // ключові кадри → значення (лінійно з плавним входом-виходом), K = [[час, значення], ...]
   const kf = (K, x) => { if (x <= K[0][0]) return K[0][1]; for (let i = 1; i < K.length; i++) if (x <= K[i][0]) {
@@ -123,48 +119,96 @@ void main(){ float lit = 0.0;
   let miPts = null;                                              // де зараз очі й борода Мирона (для світіння в темряві)
 
   // ---------- герої (greybox: капсули з підписами; силуети різні, як у characters.md) ----------
-  function people(ST, t) {
+  // Кожен герой — своя функція від стану ST: її кличе і гра (people), і вітрина героїв (?cast=1)
+  function akademik(ST, t) {
     // Академік — високий і тонкий, спить головою на столі
-    { const [w, h] = SIZES.akademik_anchor, br = Math.sin(t * 1.3);      // повільне дихання сплячого
-      L.sprite('akademik_anchor', X(380), 520, { w, h, pad: 0.04, u: { bulge: [0.62, 0.42, 0.32, 0.035 * (0.5 + 0.5 * br)] } }); }
+    // повільне дихання сплячого: вдих ~1.6 с, видих довший; спина «надувається» (bulge) і вся постать ледь росте від стільця
+    { const [w, h] = SIZES.akademik_anchor, ph = (t * 0.32) % 1, br = ph < 0.4 ? Math.sin(ph / 0.4 * Math.PI / 2) : Math.cos((ph - 0.4) / 0.6 * Math.PI / 2);
+      const hh = h * (1 + 0.025 * br);
+      L.sprite('akademik_anchor', X(380), 520 + h - hh, { w, h: hh, pad: 0.06, u: { bulge: [0.62, 0.42, 0.34, 0.11 * br] } }); }
     if (!ST.light || ST.phase === 'pro') { const z = (t * 0.5) % 1, zs = 34 + 40 * z;   // олівцеві «z-z-Z» спливають над головою
       L.sprite('p_zzz', X(400 + 40 * z), 500 - 90 * z - zs, { w: zs * 1.2, h: zs, u: { alpha: 0.85 * Math.sin(Math.PI * z) } }); }
-
+  }
+  function dvichi(ST, t) {
     // Двічі — маріонетка: лежить під машиною (видно лише ноги) → вилазить → іде до щитка → б'є ключем двічі
     const d = ST.dv, da = ST.t - d.t0;
     if (d.st === 'legs' || (d.st === 'out' && da < 0.6)) {
-      const q = d.st === 'out' ? da / 0.6 : 0, wig = d.st === 'legs' ? Math.max(0, Math.sin(t * 6)) ** 3 : 0;   // коліна смикаються — щось крутить
-      PUPPET.lying('dvichi', { x: X(2215 - 80 * q), y: 914, face: -1, wig });
-      L.shadow(X(2240 - 80 * q), 906, 64, 30, 0.9);                                                     // темна щілина під машиною ховає таз
+      const q = d.st === 'out' ? da / 0.6 : 0;                                                          // вилазить: ноги виїжджають до нас
+      PUPPET.lying('dvichi', { x: X(2118), y: 846 + 50 * q, wig: d.st === 'legs' ? 1 : 0, tap: t * 7 });
+      L.shadow(X(2118), 850 + 50 * q, 70, 20, 0.95);                                                    // темна щілина під машиною ховає верх стегон
       tag('n_dv', 'Двічі', 2140, 985, 20, 0.6); }
     else {
       const up = d.st === 'out' ? da - 0.6 : 9;                                                         // щойно підвівся: пил з-під ніг
       if (up < 0.5) for (let j = 0; j < 4; j++) L.ring(X(d.x - 60 + j * 40), 900 - 30 * up, 14 + 50 * up, 8 + 20 * up, [0.8, 0.7, 0.55], 0.5 * (1 - up / 0.5));
       const arms = d.st === 'hit' ? { R: [kf(HIT, da), -0.25] } : null;
+      const armBlend = d.st === 'hit' ? Math.min(1, da / 0.12, (1.6 - da) / 0.3) : 0;                  // повна рука з аркуша на час замаху
       L.shadow(X(d.x), 896, 80, 16, 0.35);
       const P = PUPPET.walker('dvichi', { x: X(d.x), y: d.st === 'out' ? 900 : d.y, face: -1, dist: Math.abs(2150 - d.x), wk: d.st === 'walk' ? 1 : 0,
-        cycle: 150, lift: 20, t, arms, top: DVICHI_TOP });
+        cycle: 150, lift: 20, t, arms, armBlend: Math.max(0, armBlend), top: DVICHI_TOP });
       L.sprite('it_wrench', P.hand[0] - 14, P.hand[1] - 12, { w: 28, h: 80, rot: P.ang, pivot: [14, 12] });   // ключ у руці: росте з кулака вздовж передпліччя
       tag('n_dv', 'Двічі', d.x, d.y + 30, 20, 0.6); }
-
+  }
+  function miron(ST, t) {
     // Мирон — маріонетка з пробіркою в руці: сьорбає (після кожного ковтка Ліни й зрідка сам), іде до крісла й їде на ньому
     const m = ST.mi, rid = m.st === 'follow', sa = age(ST, 'sip'), mface = rid ? (ST.lx < m.x ? -1 : 1) : -1;
     const own = (t % 7.3) / 1.2;                                                                        // «для себе» — раз на ~7 с
     const sp = sa >= 0 && sa < 1.2 ? kf(SIP, sa) : m.st === 'stand' && own < 1 ? kf(SIP, own * 1.2) * 0.8 : 0;
-    if (rid) chair(m.x - 14 * mface, 760, mface);                                                       // їде, стоячи на хрестовині крісла, як на самокаті
     L.shadow(X(m.x), 896, 70, 15, 0.35);
+    if (rid) {
+      // їде на кріслі, підібгавши ноги (окремий малюнок разом із кріслом): ковзає за Ліною, ледь погойдується на коліщатах
+      const [w, h] = SIZES.miron_sit, cx = mface > 0 ? 0.44 : 0.56, rock = 0.025 * Math.sin(t * 5.5);   // ніжка крісла — 0.44 ширини
+      L.sprite('miron_sit', X(m.x) - cx * w, 900 - h, { w, h, flip: mface < 0, rot: rock, pivot: [cx * w, h] });
+      const bx = mface > 0 ? 0.479 : 0.521, b = [X(m.x) + (bx - cx) * w, 900 - h + 0.152 * h];               // борода на малюнку
+      miPts = { eyeN: b, eyeF: b, beard: b };
+      if (m.lit) L.glow(b[0], b[1], 150, [0.65, 0.35, 1], 0.45 + 0.1 * Math.sin(t * 3));
+      tag('n_mi', 'Мирон', m.x, 925, 20, 0.6); return; }
     // ковток: плече вперед-угору (лікоть піднятий), передпліччя через груди — кисть із пробіркою біля рота (кути пораховані
     // за двома довжинами руки, як IK); sp плавно веде від опущеної руки до рота
-    const MP = PUPPET.walker('miron', { x: X(m.x), y: rid ? 876 + Math.sin(t * 3) * 2 : 900, face: mface, dist: Math.abs(3185 - m.x),
-      wk: m.st === 'tochair' && ST.t - m.t0 > 1.2 ? 1 : 0, cycle: 210, t, arms: { R: [-1.7 * sp, -0.1 - 2.44 * sp] }, top: MIRON_TOP });
-    L.sprite('it_tube', MP.hand[0] - 9, MP.hand[1] - 40, { w: 18, h: 80, rot: MP.ang, pivot: [9, 40] });   // пробірка в пальцях
+    const MP = PUPPET.walker('miron', { x: X(m.x), y: 900, face: mface, dist: Math.abs(3185 - m.x),
+      wk: m.st === 'tochair' && ST.t - m.t0 > 1.2 ? 1 : 0, cycle: 210, t, arms: { R: [-1.7 * sp, -0.1 - 2.44 * sp] }, armBlend: Math.min(1, sp * 4), top: MIRON_TOP });
+    // пробірка в пальцях; під час ковтка її тримає рука з аркуша (там пробірка намальована в руці) — свою ховаємо
+    L.sprite('it_tube', MP.hand[0] - 9, MP.hand[1] - 40, { w: 18, h: 80, rot: MP.ang, pivot: [9, 40], u: { alpha: 1 - Math.min(1, sp * 4) } });
     miPts = { eyeN: MP.top(MI_PX.eyeN), eyeF: MP.top(MI_PX.eyeF), beard: MP.top(MI_PX.beard) };
     if (m.lit) { const b = miPts.beard; L.glow(b[0], b[1], 150, [0.65, 0.35, 1], 0.45 + 0.1 * Math.sin(t * 3)); }   // борода світиться фіолетовим
     tag('n_mi', 'Мирон', m.x, 925, 20, 0.6);
+  }
+  function lina(ST, t) {
     // Ліна — маріонетка з намальованих частин (live/puppet.js): хода з кроками, що не ковзають, і махом рук
     const hop = ST.phase === 'pro' ? Math.max(0, Math.sin(Math.min(1, Math.max(0, (ST.pt - PRO.JUMP) / 0.5)) * Math.PI)) * 90 : 0;
     L.shadow(X(ST.lx), ST.ly - 4, 70, 14, 0.35 * (1 - hop / 180));                                   // м'яка тінь під ногами
     PUPPET.walker('lina', { x: X(ST.lx), y: ST.ly, face: ST.face, dist: ST.dist, wk: ST.wk, cycle: 180, hop, t, id: 'lina', neutral: ST.neutral, top: LINA_TOP });
+  }
+  function people(ST, t) { akademik(ST, t); dvichi(ST, t); miron(ST, t); lina(ST, t); }
+
+  // ---------- вітрина героїв (?cast=1): усі в ряд, кожен по колу показує свої анімації ----------
+  // Ті самі функції, що й у грі, з підставленим станом. Камеру cam ставимо окремо для кожного героя (cam = світ − екран),
+  // тож герой, що «живе» у своєму місці кімнати, малюється у своєму слоті вітрини.
+  function cast(t) {
+    cam = 0; const aw = SIZES.bg_room_a[0];
+    L.sprite('bg_room_a', 0, 0, { w: aw, h: H }); L.sprite('bg_room_b', aw, 0, { w: SIZES.bg_room_b[0], h: H }); L.rrect(0, 0, W, H, 0, [0.02, 0.02, 0.04], undefined, 0.45);   // кімната притемнена — герої на першому плані
+    const base = { t, light: 1, phase: 'lit', ev: [], ly: 905, lx: 0, face: 1, dist: 0, wk: 0, mi: { st: 'stand', x: 3185, lit: 0, t0: -9 } };
+    const say = (slot, s, x) => sign(slot, s, x, 1030, { size: 26, col: '#efe2c4', out: '#1a120b' });         // підпис: хто й що робить
+    cam = 320; akademik(base, t); cam = 0; say('c_aka', 'Академік · спить і дихає', 190);
+    // Ліна (цикл 7 с): 2 с іде вправо, 1.5 с стоїть, 2 с назад, 1.5 с стоїть
+    { const p = t % 7, v = 110, go = p < 2 ? p : p < 3.5 ? 2 : p < 5.5 ? 2 - (p - 3.5) : 0;
+      const S = Object.assign({}, base, { lx: 400 + v * go, face: p >= 3.5 && p < 5.5 ? -1 : 1, wk: (p < 2 || (p >= 3.5 && p < 5.5)) ? 1 : 0, dist: v * (p < 3.5 ? Math.min(p, 2) : 2 + Math.min(p - 3.5, 2)) });
+      lina(S, t); say('c_lina', S.wk ? 'Ліна · хода' : 'Ліна · стоїть', 510); }
+    // Двічі (цикл 9.6 с): ноги з-під машини → вилазить → іде → два удари ключем → стоїть
+    { const p = t % 9.6, T0 = t - p, d = p < 2.4 ? { st: 'legs', x: 2150, y: 930, t0: T0 } : p < 3.5 ? { st: 'out', x: 2150, y: 900, t0: T0 + 2.4 }
+        : p < 4.5 ? { st: 'walk', x: 2150 - 200 * (p - 3.5), y: 900, t0: T0 + 3.5 } : p < 6.1 ? { st: 'hit', x: 1950, y: 900, t0: T0 + 4.5 } : { st: 'idle', x: 1950, y: 900, t0: T0 + 6.1 };
+      cam = 1205; dvichi(Object.assign({}, base, { dv: d }), t); cam = 0;
+      say('c_dv', 'Двічі · ' + { legs: 'під машиною', out: 'вилазить', walk: 'хода', hit: 'удар ключем двічі', idle: 'стоїть' }[d.st], 880); }
+    // Мирон (цикл 11 с): ковтки з пробірки → іде → їде на кріслі стоячи, борода світиться
+    { const p = t % 11, T0 = t - p, ev = p < 3.6 ? [{ k: 'sip', t: T0 + (p < 1.8 ? 0 : 1.8) }] : [];
+      const m = p < 3.6 ? { st: 'stand', x: 3185, lit: 0, t0: -9 } : p < 6 ? { st: 'tochair', x: 3185 - 120 * (p - 3.6), lit: 0, t0: t - 2 } : { st: 'follow', x: 2897, lit: 1, t0: T0 + 6 };
+      cam = 1765; miron(Object.assign({}, base, { ev, mi: m, lx: 2600 }), t); cam = 0;
+      say('c_mi', 'Мирон · ' + { stand: 'ковток з пробірки', tochair: 'хода', follow: 'їде на кріслі' }[m.st], 1330); }
+    // щуриця біжить (той самий «галоп», що в пролозі) і Аксель плаває (хвіст хвилею)
+    { const [w, h] = SIZES.rat_anchor, gal = Math.abs(Math.sin(t * 26)) * 5;
+      L.sprite('rat_anchor', 1720 - w / 2, 890 - h - gal, { w, h, pad: 0.12, u: { sway: [0.12, 9, t * 30, 3] } }); sign('c_rat', 'щуриця · біжить', 1720, 930, { size: 26, col: '#efe2c4', out: '#1a120b' }); }
+    { const [w, h] = SIZES.axel_anchor, ay = 700 + 5 * Math.sin(t * 1.9), back = Math.cos(t * 0.7) < 0;
+      L.sprite('axel_anchor', 1720 + 60 * Math.sin(t * 0.7) - w / 2, ay - h / 2, { w, h, pad: 0.1, flip: back, u: { sway: [0.08, 7, t * 4.2, 3] } });
+      sign('c_ax', 'Аксель · плаває', 1720, 780, { size: 26, col: '#efe2c4', out: '#1a120b' }); }
   }
 
   // ---------- темрява й кольорові плями світла ----------
@@ -294,6 +338,7 @@ void main(){ float lit = 0.0;
   }
 
   S.render = (t) => {
+    if (S.CAST) { L.beginBG([0.1, 0.1, 0.1, 1]); L.beginComp(); cast(t); L.finish(t, { bloom: [0.12, 0.1], vignette: 0.9 }); return; }
     const ST = S.state || SIM.at(t);
     cam = ST.camX;
     L.beginBG([0.1, 0.1, 0.1, 1]); L.beginComp();
