@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { buildHouse, LAB, FH } from './building.js';
 import { Actor, depthAt } from './actor.js';
 import { buildDecor } from './decor.js';
+import { loadCast } from './cast.js';
 
 const q = new URLSearchParams(location.search);
 // «екран» гри 16:9; ZOOM 0.35 — кімната займає третину висоти (рішення 2026-10-29). ?zoom=1.5 — наблизити для перевірки
@@ -46,6 +47,7 @@ const decor = buildDecor(scene, house);     // живий фон: вогники
 // Голову й шию в ході не рухаємо (walkSkip) — інакше «задумлива» хода дивиться під ноги
 const lina = await Actor.load('assets/lina.glb', scene, { walk: /Thoughtful_Walk/, walkRate: 1.35, walkSkip: /^(Head|neck|headfront|head_end)\./,
   idle: [/^Idle_4$/, /^Idle_3$/, /^Idle_12$/] });
+const cast = await loadCast(scene);         // колеги в лабі: Двічі, Мирон, Академік — живуть за своїм розпорядком
 
 // Позначка дотику: кільце, що розходиться і зникає — гравець бачить, що гра його «почула» (дрібний juice)
 const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40),
@@ -71,7 +73,7 @@ const clock = new THREE.Clock();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);       // dt — скільки секунд минуло з минулого кадру (не більше 0.1 — після «заморозки» вкладки)
   if (q.has('auto') && !lina.target && (autoT -= dt) < 0) { const [x, d] = AUTO[autoI++ % AUTO.length]; lina.walkTo(x, d); autoT = 1.2; }
-  lina.update(dt); decor(dt);
+  lina.update(dt); cast.update(dt); decor(dt);
   // камера ледь їде за героїнею (на 15 %): вся лаба й так у кадрі, а легкий рух робить сцену живою.
   // Наближена (?zoom>1, для перевірки) — дивиться прямо на героїню
   if (ZOOM > 1) cam.position.set(lina.x, 330, 5000);

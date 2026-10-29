@@ -3,7 +3,7 @@ tools/meshy3d.py — 3D через Meshy API: картинка → 3D-модел
 Проба «3D-персонаж у нашому світі» (2026-10-29). Кожен крок асинхронний: POST дає id задачі, далі чекаємо SUCCEEDED.
 
   python tools/meshy3d.py model IMG.png OUTDIR          # image-to-3D (30 кр: меш + текстура 2K)
-  python tools/meshy3d.py rig MODEL_TASK_ID OUTDIR      # автоскелет (5 кр), у комплекті хода й біг
+  python tools/meshy3d.py rig MODEL_TASK_ID OUTDIR [ЗРІСТ_М]  # автоскелет (5 кр), у комплекті хода й біг
   python tools/meshy3d.py anim RIG_TASK_ID OUTDIR 12,34 # анімації з бібліотеки (3 кр за кожну)
   python tools/meshy3d.py lib SEARCH                    # пошук у бібліотеці анімацій (безкоштовно)
 Ключ MESHY_API_KEY — з gamelab/.env (шукаємо вгору від поточної папки).
@@ -84,8 +84,9 @@ def main():
         fetch(t["model_urls"]["glb"], os.path.join(out, "remeshed.glb"))
         json.dump(t, open(os.path.join(out, "remesh_task.json"), "w"), indent=1)
     elif cmd == "rig":
-        mid, out = a
-        tid = call("POST", "/rigging", {"input_task_id": mid, "height_meters": 1.6})["result"]
+        # зріст у метрах (за замовчуванням 1.6 — Ліна): скелет підганяє пропорції кісток під реальний розмір
+        mid, out, *h = a
+        tid = call("POST", "/rigging", {"input_task_id": mid, "height_meters": float(h[0]) if h else 1.6})["result"]
         print("rig task", tid, flush=True)
         t = wait("rigging", tid)
         r = t["result"]

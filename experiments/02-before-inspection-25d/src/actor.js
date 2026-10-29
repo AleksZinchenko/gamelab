@@ -4,12 +4,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const HEIGHT = 400;           // зріст героя у пікселях кімнати (як 2D-Ліна: ≈0.8 висоти дверей)
+const HEIGHT = 400;           // зріст героя у пікселях кімнати за замовчуванням (Ліна: ≈0.8 висоти дверей); інші — clips.height
 const TILT = 0.14;           // нахил моделі до глядача (рад): ми дивимось на кімнату трохи згори, як на малюнку
 const FEET_BACK = 210, FEET_FRONT = 120;   // y ступнів біля задньої стіни і біля глядача (рядки 870…960 малюнка)
 
 export class Actor {
-  // clips: які рухи брати з файлу — { walk: /…/, idle: [/…/, /…/] } (кілька стійок чергуються — так герой живіший)
+  // clips: які рухи брати з файлу — { walk: /…/, idle: [/…/, /…/] } (кілька стійок чергуються — так герой живіший);
+  // gest: { назва: /…/ } — жести «один раз» (випити, вдарити); height — зріст у px; x, d, face — де стоїть на старті
   static async load(url, scene, clips) {
     const gltf = await new GLTFLoader().loadAsync(url);
     return new Actor(gltf, scene, clips);
@@ -21,7 +22,7 @@ export class Actor {
     this.tilt = new THREE.Group(); this.yaw = new THREE.Group(); this.tilt.add(this.yaw); scene.add(this.tilt);
     const model = gltf.scene; this.yaw.add(model);
     const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
-    model.scale.setScalar(HEIGHT / size.y);                 // модель Meshy — 1.6 «метра» → 400 px
+    model.scale.setScalar((clips.height || HEIGHT) / size.y);   // модель Meshy (метри) → пікселі кімнати
     this.tilt.rotation.x = TILT;
     model.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });   // скелет рухає вершини — рамку не перераховуємо
     // тінь під ногами: темний напівпрозорий овал — без неї герой «висить» над підлогою
@@ -42,7 +43,18 @@ export class Actor {
     const rate = clips.walkRate || 1;
     this.speed = strideSpeed(model, this.mixer, this.walkAct, model.scale.x) * rate;
     this.walkAct.timeScale = rate;
+    // жести: граються один раз і завмирають на останньому кадрі, поки не повернемось до стійки
+    this.gests = {};
+    for (const [n, re] of Object.entries(clips.gest || {})) {
+      const a = this.mixer.clipAction(clip(re)); a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; this.gests[n] = a;
+    }
     this.idleI = 0; this.act = this.idles[0]; this.act.play(); this.cur = 'idle';
+    // жест дограв: ще раз (Двічі б'є двічі!) або назад до стійки
+    this.mixer.addEventListener('finished', (e) => {
+      if (this.cur !== 'gest' || e.action !== this.act) return;
+      if (--this.gestN > 0) { this.act.reset().play(); return; }
+      this.cur = 'idle'; this.fadeTo(this.idles[this.idleI], 0.4);
+    });
     // коли стійка дограла цикл — інколи змінюємо її на іншу (переступила, нахилила голову…)
     this.mixer.addEventListener('loop', (e) => {
       if (this.cur !== 'idle' || e.action !== this.act || this.idles.length < 2 || Math.random() < 0.5) return;
@@ -50,7 +62,8 @@ export class Actor {
       this.fadeTo(this.idles[this.idleI], 0.6);
     });
     // стан: позиція в кімнаті (x, глибина d), ціль, куди дивиться (face: 1 праворуч, -1 ліворуч)
-    this.x = 1300; this.d = 0.4; this.target = null; this.face = 1; this.ang = 0.6;
+    this.x = clips.x ?? 1300; this.d = clips.d ?? 0.4; this.target = null; this.face = clips.face ?? 1; this.ang = this.face * 0.6;
+    this.rest = clips.ang ?? null;   // свій кут стоячи (Академік спить боком до столу); пішов — забуваємо
   }
 
   // плавний перехід між рухами (crossfade) — щоб хода не «вмикалась» ривком
@@ -60,7 +73,13 @@ export class Actor {
   }
   fadeTo(a, secs) { if (a === this.act) return; a.reset().play(); a.crossFadeFrom(this.act, secs, false); this.act = a; }
 
-  walkTo(x, d = this.d) { this.target = { x, d }; }
+  walkTo(x, d = this.d) { this.target = { x, d }; this.rest = null; }
+  // жест n разів поспіль (лише стоячи); повертає false, якщо такого жесту нема
+  gesture(name, n = 1) {
+    const a = this.gests[name]; if (!a || this.target) return false;
+    this.cur = 'gest'; this.gestN = n; this.fadeTo(a, 0.3); return true;
+  }
+  get busy() { return this.cur === 'gest' || !!this.target; }
 
   update(dt, base = 0) {
     let dirX = 0, dirZ = 0;
@@ -75,10 +94,10 @@ export class Actor {
         if (Math.abs(dirX) > 0.2) this.face = Math.sign(dirX);
       }
     }
-    this.play(this.target ? 'walk' : 'idle');
+    if (this.target || this.cur !== 'gest') this.play(this.target ? 'walk' : 'idle');   // жест не перериваємо, хіба що пішли
     // поворот: у ході — по напрямку, але трохи до глядача (як у мальованих героїв у ракурсі 3/4);
     // стоячи — пів-оберту до глядача в бік, куди йшов. Кут доганяємо плавно (не крутимось миттєво).
-    const goal = this.target ? Math.atan2(dirX, dirZ + 0.45 * Math.abs(dirX)) : this.face * 0.6;
+    const goal = this.target ? Math.atan2(dirX, dirZ + 0.45 * Math.abs(dirX)) : this.rest ?? this.face * 0.6;
     let diff = goal - this.ang; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     this.ang += diff * Math.min(1, dt * 10); this.yaw.rotation.y = this.ang;
     // позиція: ступні на підлозі мальованої кімнати; ближче до глядача — нижче на екрані і трохи більший
