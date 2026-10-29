@@ -41,3 +41,7 @@ __pycache__/
 
 # Скріншоти чужих ігор — лише як референс кольору, не в git (авторські права)
 experiments/*/study/refs/machinarium/
+
+# Проби 3D/камери (2026-10-29): кадри, відео і GLB-моделі — важкі, лишаються локально
+experiments/*/study/3d/
+experiments/*/study/zoom/
