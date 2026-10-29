@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { buildHouse, LAB, FH } from './building.js';
 import { Actor, depthAt } from './actor.js';
+import { buildDecor } from './decor.js';
 
 const q = new URLSearchParams(location.search);
 // «екран» гри 16:9; ZOOM 0.35 — кімната займає третину висоти (рішення 2026-10-29). ?zoom=1.5 — наблизити для перевірки
@@ -16,8 +17,10 @@ const scene = new THREE.Scene();
 
 // Камера ортографічна: розмір не залежить від відстані (як у 2D), видима ширина = 1920 / 0.35 ≈ 5486 px світу
 const cam = new THREE.OrthographicCamera(-VW / ZOOM / 2, VW / ZOOM / 2, VH / ZOOM / 2, -VH / ZOOM / 2, 1, 20000);
-const CAM_Y = 840;                                 // центр кадру по висоті: видно наш поверх, верхній цілком і пів нижнього
-cam.position.set(LAB.w / 2, CAM_Y, 5000);
+const CAM_Y = 1000;                                // центр кадру по висоті: наш поверх, верхній з галереєю архіву, верх нижнього
+// ?cx= ?cy= — свій центр кадру (для загального плану будинку: ?zoom=0.17&cx=2300&cy=900)
+const CX = q.has('cx') ? +q.get('cx') : null, CY = q.has('cy') ? +q.get('cy') : CAM_Y;
+cam.position.set(CX ?? LAB.w / 2, CY, 5000);
 
 // Світло тільки для 3D-героїв (мальовані кімнати «незасвічувані»), під гаму нашого малюнка:
 // - розсіяне: згори тепле, знизу — тепле відбиття від підлоги (не чорне: чорне робило під підборіддям тінь-«бороду»);
@@ -37,7 +40,8 @@ function fit() {
 }
 addEventListener('resize', fit); fit();
 
-await buildHouse(scene);
+const house = await buildHouse(scene);
+const decor = buildDecor(scene, house);     // живий фон: вогники, світло з дверей, ліфт
 // Ліна: хода дрібними частими кроками (Thoughtful Walk ×1.35), три спокійні стійки «рівненько» (ноги разом, руки вздовж тіла).
 // Голову й шию в ході не рухаємо (walkSkip) — інакше «задумлива» хода дивиться під ноги
 const lina = await Actor.load('assets/lina.glb', scene, { walk: /Thoughtful_Walk/, walkRate: 1.35, walkSkip: /^(Head|neck|headfront|head_end)\./,
@@ -67,11 +71,11 @@ const clock = new THREE.Clock();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);       // dt — скільки секунд минуло з минулого кадру (не більше 0.1 — після «заморозки» вкладки)
   if (q.has('auto') && !lina.target && (autoT -= dt) < 0) { const [x, d] = AUTO[autoI++ % AUTO.length]; lina.walkTo(x, d); autoT = 1.2; }
-  lina.update(dt);
+  lina.update(dt); decor(dt);
   // камера ледь їде за героїнею (на 15 %): вся лаба й так у кадрі, а легкий рух робить сцену живою.
   // Наближена (?zoom>1, для перевірки) — дивиться прямо на героїню
   if (ZOOM > 1) cam.position.set(lina.x, 330, 5000);
-  else cam.position.x += (LAB.w / 2 + (lina.x - LAB.w / 2) * 0.15 - cam.position.x) * Math.min(1, dt * 3);
+  else if (CX === null) cam.position.x += (LAB.w / 2 + (lina.x - LAB.w / 2) * 0.15 - cam.position.x) * Math.min(1, dt * 3);
   ringT += dt; ring.material.opacity = Math.max(0, 0.8 - ringT * 1.6); ring.scale.setScalar(30 + ringT * 120);
   renderer.render(scene, cam);
   requestAnimationFrame(frame);

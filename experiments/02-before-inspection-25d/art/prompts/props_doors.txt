@@ -1,0 +1,8 @@
+A sprite sheet of separate game props, painted in exactly the gouache style and brushwork of Image 1 (an old research institute at night): warm brown wood, dark iron, matte. Six separate objects in a 3 by 2 grid with wide empty space between them, every object shown whole, straight from the front:
+1) an old wooden door frame with a lintel, the opening empty (just the frame), tall;
+2) an old wooden panelled door seen almost edge-on, swung open, tall and narrow;
+3) a wooden ladder, tall and narrow;
+4) a square wooden trapdoor hatch lying open;
+5) an old iron cage lift cabin with a folding lattice gate and a dim warm bulb inside;
+6) a small iron wall lamp with a glowing warm bulb.
+No people, no text.
