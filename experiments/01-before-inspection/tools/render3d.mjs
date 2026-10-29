@@ -6,7 +6,8 @@
 import http from 'http'; import fs from 'fs'; import path from 'path'; import { createRequire } from 'module';
 const gl = path.resolve(process.cwd(), '../..'), req = createRequire(path.join(gl, '.claude/skills/ref2game/scripts/render.mjs'));
 const { chromium } = req('playwright');
-const [out, model, style = 'std', yaw = '60', frames = '24'] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
+// CLIP (необов'язково) — назва рухy, коли у файлі їх кілька (напр. Idle_3); без неї — перший рух
+const [out, model, style = 'std', yaw = '60', frames = '24', clipName = ''] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
 const rel = path.relative(gl, path.resolve(model)).split(path.sep).join('/');
 
 // Сторінка-рендерер. Камера ортографічна (без перспективного спотворення — як у 2D, де розмір не залежить від відстані),
@@ -42,7 +43,7 @@ root.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false;
 for (const [o, h] of hulls) o.parent.add(h);
 const k = size.y * 1.12, cam = new THREE.OrthographicCamera(-k * W / H / 2, k * W / H / 2, k / 2, -k / 2, -50, 50);
 cam.position.set(0, box.min.y + size.y * 0.53 + Math.sin(0.14) * 10, 10 * Math.cos(0.14)); cam.lookAt(0, box.min.y + size.y * 0.53, 0);
-const mixer = new THREE.AnimationMixer(root), clip = gltf.animations[0];
+const mixer = new THREE.AnimationMixer(root), clip = gltf.animations.find((a) => a.name === '${clipName}') || gltf.animations[0];
 if (clip) mixer.clipAction(clip).play();
 let hips = null; root.traverse((o) => { if (!hips && o.isBone && /hip|pelvis/i.test(o.name)) hips = o; });
 window.__info = { clips: gltf.animations.map((a) => [a.name, a.duration]), hips: hips && hips.name, size: size.toArray() };

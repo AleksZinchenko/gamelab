@@ -1,0 +1,11 @@
+# Проміжні й браковані матеріали — локально, не в git (важкі й відтворювані)
+study/probeB/
+study/rejected/
+study/palette/
+study/style_probe/A_*.png
+study/style_probe/C_*.png
+study/style_probe/keyart_v2_v3.jpg
+art/raw/
+art/logs/
+frames/
+art/ui/

@@ -13,7 +13,7 @@ const srv = http.createServer((q, r) => { let f;
   if (!f.startsWith(root + path.sep)) { r.writeHead(403); r.end(); return; }
   fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; }
     r.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache' }); r.end(d); }); });
-const [cmd, out, arg] = process.argv.slice(2);
+const [cmd, out, arg, extra] = process.argv.slice(2);          // extra — додаткові параметри сторінки, напр. «zoom=1.6»
 await new Promise((r) => srv.listen(cmd === 'serve' ? +(out || 8931) : 0, '127.0.0.1', r));
 const url = `http://127.0.0.1:${srv.address().port}/`;
 if (cmd === 'serve') { console.log('serving', url); }
@@ -25,8 +25,9 @@ else {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...(cmd === 'video' ? { recordVideo: { dir: vdir, size: { width: 1280, height: 720 } } } : {}) });
   const tab = await ctx.newPage();
   tab.on('pageerror', (e) => console.error('PAGE ERROR:', e.message)); tab.on('console', (m) => m.type() === 'error' && console.error(m.text()));
-  await tab.goto(url + '?auto=1&shot=1');
+  await tab.goto(url + '?auto=1&shot=1' + (extra ? '&' + extra : ''));
   await tab.waitForFunction(() => window.__ready === true, null, { timeout: 120000 });
+  console.log('debug:', JSON.stringify(await tab.evaluate(() => window.__dbg || null)));
   await tab.waitForTimeout(+(arg || 3) * 1000);
   fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
   if (cmd === 'shot') await tab.screenshot({ path: out });

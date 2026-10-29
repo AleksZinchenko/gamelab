@@ -1,0 +1,6 @@
+{
+  "generator": { "provider": "meshy", "model": null, "size": "1920x1080", "quality": "high", "opaque": ["bg_*"] },
+  "style_bible": "art/style_bible.txt",
+  "style_ref": ["art/ref/lab_left.jpg"],
+  "view": [1920, 1080]
+}

@@ -102,10 +102,11 @@ def main():
         fetch(t["result"]["animation_glb_url"], os.path.join(out, f"anim_{ids.replace(',', '_')}.glb"))
         json.dump(t, open(os.path.join(out, f"anim_{ids.replace(',', '_')}.json"), "w"), indent=1)
     elif cmd == "lib":
-        q = urllib.parse.quote(a[0])
-        res = call("GET", f"/animations/library?search={q}")
+        # «lib слово» — пошук за назвою; «lib cat:WalkAndRun» — уся категорія. Друкуємо: id | назва | підкатегорія | прев'ю
+        q = f"category={a[0][4:]}" if a[0].startswith("cat:") else "search=" + urllib.parse.quote(a[0])
+        res = call("GET", f"/animations/library?{q}&page_size=500")
         for x in (res if isinstance(res, list) else res.get("data", res.get("result", []))):
-            print(json.dumps(x, ensure_ascii=False)[:200])
+            print(x["action_id"], "|", x["name"], "|", x.get("sub_category"), "|", x.get("preview_url"))
 
 
 if __name__ == "__main__":

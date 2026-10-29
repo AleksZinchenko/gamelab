@@ -5,17 +5,17 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const HEIGHT = 400;           // зріст героя у пікселях кімнати (як 2D-Ліна: ≈0.8 висоти дверей)
-const SPEED = 260;            // швидкість ходи, px/с — підібрано на пробі так, щоб ступні не ковзали по підлозі
-const TILT = 0.14;            // нахил моделі до глядача (рад): ми дивимось на кімнату трохи згори, як на малюнку
+const TILT = 0.14;           // нахил моделі до глядача (рад): ми дивимось на кімнату трохи згори, як на малюнку
 const FEET_BACK = 210, FEET_FRONT = 120;   // y ступнів біля задньої стіни і біля глядача (рядки 870…960 малюнка)
 
 export class Actor {
-  static async load(url, scene) {
+  // clips: які рухи брати з файлу — { walk: /…/, idle: [/…/, /…/] } (кілька стійок чергуються — так герой живіший)
+  static async load(url, scene, clips) {
     const gltf = await new GLTFLoader().loadAsync(url);
-    return new Actor(gltf, scene);
+    return new Actor(gltf, scene, clips);
   }
 
-  constructor(gltf, scene) {
+  constructor(gltf, scene, clips) {
     // Ієрархія: tilt (позиція + нахил до глядача) → yaw (поворот, куди дивиться) → модель.
     // Так поворот завжди навколо вертикалі героя, а нахил — спільний для всієї сцени.
     this.tilt = new THREE.Group(); this.yaw = new THREE.Group(); this.tilt.add(this.yaw); scene.add(this.tilt);
@@ -28,11 +28,23 @@ export class Actor {
     this.shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 32),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.38, depthWrite: false, toneMapped: false }));
     this.shadow.scale.set(85, 16, 1); scene.add(this.shadow);
-    // рухи: беремо кліпи з файлу за назвою (Meshy називає їх «Armature|walking_man|baselayer» тощо)
+    // рухи: беремо кліпи з файлу за назвою (Meshy називає їх «Idle_4», «Thoughtful_Walk» тощо)
     this.mixer = new THREE.AnimationMixer(model);
-    const clip = (re) => gltf.animations.find((a) => re.test(a.name));
-    this.acts = { walk: this.mixer.clipAction(clip(/walk/i)), idle: this.mixer.clipAction(clip(/idle/i)) };
-    this.acts.idle.play(); this.cur = 'idle';
+    const clip = (re) => gltf.animations.find((a) => re.test(a.name)) || gltf.animations[0];
+    this.walkAct = this.mixer.clipAction(clip(clips.walk));
+    this.idles = clips.idle.map((re) => this.mixer.clipAction(clip(re)));
+    // швидкість ходи міряємо з самої анімації — тоді ступні не ковзають по підлозі за будь-якої ходи
+    // walkRate — темп кроків: >1 — ті самі кроки, але частіше (і швидкість росте разом з ним, ступні не ковзають)
+    const rate = clips.walkRate || 1;
+    this.speed = strideSpeed(model, this.mixer, this.walkAct, model.scale.x) * rate;
+    this.walkAct.timeScale = rate;
+    this.idleI = 0; this.act = this.idles[0]; this.act.play(); this.cur = 'idle';
+    // коли стійка дограла цикл — інколи змінюємо її на іншу (переступила, нахилила голову…)
+    this.mixer.addEventListener('loop', (e) => {
+      if (this.cur !== 'idle' || e.action !== this.act || this.idles.length < 2 || Math.random() < 0.5) return;
+      this.idleI = (this.idleI + 1 + Math.floor(Math.random() * (this.idles.length - 1))) % this.idles.length;
+      this.fadeTo(this.idles[this.idleI], 0.6);
+    });
     // стан: позиція в кімнаті (x, глибина d), ціль, куди дивиться (face: 1 праворуч, -1 ліворуч)
     this.x = 1300; this.d = 0.4; this.target = null; this.face = 1; this.ang = 0.6;
   }
@@ -40,9 +52,9 @@ export class Actor {
   // плавний перехід між рухами (crossfade) — щоб хода не «вмикалась» ривком
   play(name) {
     if (name === this.cur) return;
-    const a = this.acts[name], b = this.acts[this.cur];
-    a.reset().play(); a.crossFadeFrom(b, 0.25, false); this.cur = name;
+    this.cur = name; this.fadeTo(name === 'walk' ? this.walkAct : this.idles[this.idleI], 0.25);
   }
+  fadeTo(a, secs) { if (a === this.act) return; a.reset().play(); a.crossFadeFrom(this.act, secs, false); this.act = a; }
 
   walkTo(x, d = this.d) { this.target = { x, d }; }
 
@@ -53,7 +65,7 @@ export class Actor {
       const dx = this.target.x - this.x, dz = (this.target.d - this.d) * 300, dist = Math.hypot(dx, dz);
       if (dist < 4) { this.target = null; }
       else {
-        const step = Math.min(dist, SPEED * dt);
+        const step = Math.min(dist, this.speed * dt);
         this.x += dx / dist * step; this.d += dz / dist * step / 300;
         dirX = dx / dist; dirZ = dz / dist;
         if (Math.abs(dirX) > 0.2) this.face = Math.sign(dirX);
@@ -71,6 +83,25 @@ export class Actor {
     this.shadow.position.set(this.x, y + 2, 39 + this.d * 120); this.shadow.scale.set(85 * k, 16 * k, 1);
     this.mixer.update(dt);
   }
+}
+
+// Швидкість ходи з анімації (px/с). Анімація йде «на місці»: ступня, що стоїть на підлозі, їде назад рівно з тією
+// швидкістю, з якою герой мав би йти вперед. Проганяємо цикл ходи по кадрах, для кожного кроку беремо нижчу ступню
+// (вона на підлозі) і міряємо, скільки вона проїхала назад (модель дивиться вздовж +z).
+function strideSpeed(model, mixer, act, scale) {
+  const feet = ['LeftFoot', 'RightFoot'].map((n) => model.getObjectByName(n));
+  if (feet.some((f) => !f)) return 220;
+  const N = 60, T = act.getClip().duration, pts = [];
+  act.reset().play();
+  for (let i = 0; i <= N; i++) {
+    mixer.setTime(T * i / N); model.updateMatrixWorld(true);
+    pts.push(feet.map((f) => model.worldToLocal(f.getWorldPosition(new THREE.Vector3()))));
+  }
+  act.stop(); mixer.setTime(0);
+  let back = 0;
+  for (let i = 1; i <= N; i++) { const k = pts[i][0].y < pts[i][1].y ? 0 : 1; back += pts[i - 1][k].z - pts[i][k].z; }
+  const v = back / T * scale;
+  return v > 60 && v < 500 ? v : 220;                // захист від дивних анімацій: розумні межі
 }
 
 // рядок підлоги (y екрану в кімнаті) → глибина d; поза смугою підлоги — null

@@ -1,0 +1,12 @@
+A background for a point-and-click adventure game: the DIRECTOR'S OFFICE on the upper floor of the same old research institute at night, EMPTY, no people, no animals, no characters. Image 1 is a laboratory one floor below in the same building: paint in exactly that gouache style, palette, brushwork and light, with the same wall plaster texture.
+The room is seen as a cut-away of a doll's house: straight from the front like a theatre stage, eye level, the back wall parallel to the picture plane, no side walls and no room corners visible, no fisheye. The ceiling with a plaster cornice occupies the top 12% of the image. The floor (worn dark herringbone parquet with a faded red carpet runner) starts at 77% of the image height and fills the bottom of the image, exactly like in Image 1.
+The director is not here, but he is clearly still awake before tomorrow's inspection: the room is warmly lit.
+Objects from left to right (positions in % of the image width):
+- 3%-14%: a tall wooden bookcase full of thick office binders and folders;
+- 16%-24%: a heavy old green iron safe on the floor with a brass handle;
+- 27%-38%: a tall window with heavy dark curtains, the night sky and a thin moon;
+- 40%-72%: a big massive dark wooden director's desk facing us, with a green-shaded banker's lamp (lit, warm), neat stacks of papers, an old black rotary telephone, a thermos and a glass of tea in a metal holder; behind the desk a tall worn leather armchair with a high back (empty);
+- 50%-62%: on the wall above the desk a large framed portrait (a blurry, dark old painting) and two small blank framed certificates beside it;
+- 75%-81%: a wooden coat rack with a long grey coat and a hat;
+- 84%-97%: a potted ficus tree in a big pot and a small side table with a carafe of water.
+One warm ceiling lamp with a fabric shade hangs at 55%. Large calm areas of plain wall between the objects. No text anywhere, no letters, no numbers.
