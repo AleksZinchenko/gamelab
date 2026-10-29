@@ -1,0 +1,9 @@
+A background for a point-and-click adventure game: the NEIGHBOURING LABORATORY on the same floor of an old research institute at night, a physics and electronics lab.
+Image 1 is a laboratory in the same old research institute: paint in exactly that gouache style, palette, brushwork and light, with the same wall plaster texture.
+The room is seen as a cut-away of a doll's house: straight from the front like a theatre stage, eye level, the back wall parallel to the picture plane, no side walls and no room corners visible, no fisheye. The ceiling occupies the top 12% of the image. The floor starts at 77% of the image height and fills the bottom of the image, exactly like in Image 1.
+Lights are off, the room is lit by cool moonlight from the window and the tiny green and amber glow of a few instrument lamps. Floor: worn dark tiles. Objects from left to right (positions in % of the image width):
+- 3%-28%: a long workbench with old oscilloscopes, a soldering station, coils of wire and boxes of radio parts, shelves above it;
+- 32%-44%: a tall window with the night sky and a thin moon;
+- 48%-70%: a big old grey metal instrument rack with dials, switches and cables hanging down;
+- 74%-96%: a blackboard with chalk scribbles (just squiggles, no readable text), a stool and a cardboard box of tubes on the floor.
+Large calm areas of plain wall between the objects. EMPTY room: no people, no animals, no characters. No text anywhere, no letters, no numbers.

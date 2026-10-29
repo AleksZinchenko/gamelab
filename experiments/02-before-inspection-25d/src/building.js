@@ -8,19 +8,22 @@ export const LAB = { x: 0, w: 3588, floor: 0 };     // наша лаборато
 const floorY = (f) => f * (FH + SLAB);              // y підлоги поверху f
 const X0 = -1100, X1 = 5700;                        // зовнішні стіни будинку (ліва / права)
 
-// План будинку: поверх, x, ширина, назва, колір стін заглушки. Наша лаба — справжній малюнок (img).
+// План будинку: поверх, x, ширина, назва, колір стін заглушки. Намальовані кімнати мають img (гуаш, Meshy 2026-10-29).
+// Ширина кімнати ≈ ширина її картинки при висоті 1080: Meshy малює не ширше 16:9 (≈1920), тому довгий
+// нижній поверх поділено на хол, майстерню й котельню. Сходова клітка — одна картинка на всі поверхи.
 export const ROOMS = [
-  { f: 1, x: X0, w: 1040, name: 'Сходи', col: '#3b3a33' },
-  { f: 1, x: 0, w: 1900, name: 'Кабінет Шефа', img: 'assets/bg_chief.jpg' },   // гуаш, Meshy 2026-10-29: Шеф не спить перед інспекцією
-  { f: 1, x: 1960, w: 1628, name: 'Архів', col: '#36382f' },
-  { f: 1, x: 3648, w: X1 - 3648, name: 'Бухгалтерія', col: '#3a3530' },
-  { f: 0, x: X0, w: 1040, name: 'Сходи', col: '#3b3a33' },
+  { f: 1, x: X0, w: 1040, name: 'Сходи', img: 'assets/bg_stairs.jpg', dim: true },
+  { f: 1, x: 0, w: 1900, name: 'Кабінет Шефа', img: 'assets/bg_chief.jpg' },   // Шеф не спить перед інспекцією — світло горить
+  { f: 1, x: 1960, w: 1628, name: 'Архів', img: 'assets/bg_archive.jpg', dim: true },
+  { f: 1, x: 3648, w: X1 - 3648, name: 'Бухгалтерія', img: 'assets/bg_accounting.jpg', dim: true },
+  { f: 0, x: X0, w: 1040, name: 'Сходи', img: 'assets/bg_stairs.jpg', dim: true, flip: true },  // віддзеркалено — сходи «зигзагом»
   { f: 0, x: 0, w: 3588, name: 'Лабораторія №3', img: 'assets/lab.jpg' },
-  { f: 0, x: 3648, w: X1 - 3648, name: 'Сусідня лабораторія', col: '#2f3a36' },
-  { f: -1, x: X0, w: 1040, name: 'Сходи', col: '#3b3a33' },
-  { f: -1, x: 0, w: 2400, name: 'Хол і вахта · вхід', col: '#40382c', door: true },
-  { f: -1, x: 2460, w: X1 - 2460, name: 'Майстерня', col: '#38342c' },
-  { f: -2, x: X0, w: X1 - X0, name: 'Підвал · нірка пані Хвостенко', col: '#26241f' },
+  { f: 0, x: 3648, w: X1 - 3648, name: 'Сусідня лабораторія', img: 'assets/bg_lab2.jpg', dim: true },
+  { f: -1, x: X0, w: 1040, name: 'Сходи', img: 'assets/bg_stairs.jpg', dim: true },
+  { f: -1, x: 0, w: 1920, name: 'Хол і вахта · вхід', img: 'assets/bg_hall.jpg', door: true },
+  { f: -1, x: 1980, w: 1620, name: 'Майстерня', img: 'assets/bg_workshop.jpg', dim: true },
+  { f: -1, x: 3660, w: X1 - 3660, name: 'Котельня', img: 'assets/bg_boiler.jpg', dim: true },
+  { f: -2, x: X0, w: X1 - X0, name: 'Підвал · нірка пані Хвостенко', col: '#26241f' },   // поза кадром в Акті I — поки заглушка
 ];
 
 // Текстура-заглушка: стіна, підлога, вікно і підпис «олівцем» — щоб на макеті було видно, що де буде
@@ -64,7 +67,12 @@ export async function buildHouse(scene) {
   plane(scene, -8000, -6000, 20000, 6000 + floorY(-1), flat(0x1a140e), -40);
   // кімнати
   for (const r of ROOMS) {
-    const mat = r.img ? flat(0xffffff, { map: loader.load(r.img, (t) => { t.colorSpace = THREE.SRGBColorSpace; }) })
+    // dim — кімната без світла: трохи темніша й холодніша (колір матеріалу множиться на картинку), щоб погляд ішов на нашу лабу.
+    // flip — дзеркальна картинка (текстура з повтором -1 по x)
+    const mat = r.img ? flat(r.dim ? 0xaeb3c2 : 0xffffff, { map: loader.load(r.img, (t) => {
+                          t.colorSpace = THREE.SRGBColorSpace;
+                          if (r.flip) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; }
+                        }) })
                       : flat(0xffffff, { map: stubTexture(r) });
     plane(scene, r.x, floorY(r.f), r.w, FH, mat, 0);
   }

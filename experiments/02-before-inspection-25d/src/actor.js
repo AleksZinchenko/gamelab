@@ -31,7 +31,11 @@ export class Actor {
     // рухи: беремо кліпи з файлу за назвою (Meshy називає їх «Idle_4», «Thoughtful_Walk» тощо)
     this.mixer = new THREE.AnimationMixer(model);
     const clip = (re) => gltf.animations.find((a) => re.test(a.name)) || gltf.animations[0];
-    this.walkAct = this.mixer.clipAction(clip(clips.walk));
+    const walk = clip(clips.walk);
+    // walkSkip — кістки, яких хода не чіпає (напр. голова й шия): «задумлива» хода опускає голову вниз,
+    // а без цих доріжок голова лишається в спокійній позі моделі — дивиться вперед, як у мальованої Ліни
+    if (clips.walkSkip) walk.tracks = walk.tracks.filter((t) => !clips.walkSkip.test(t.name));
+    this.walkAct = this.mixer.clipAction(walk);
     this.idles = clips.idle.map((re) => this.mixer.clipAction(clip(re)));
     // швидкість ходи міряємо з самої анімації — тоді ступні не ковзають по підлозі за будь-якої ходи
     // walkRate — темп кроків: >1 — ті самі кроки, але частіше (і швидкість росте разом з ним, ступні не ковзають)

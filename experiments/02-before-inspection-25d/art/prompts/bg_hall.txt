@@ -1,0 +1,10 @@
+A background for a point-and-click adventure game: the ENTRANCE HALL with a watchman's post on the ground floor of an old research institute at night.
+Image 1 is a laboratory in the same old research institute: paint in exactly that gouache style, palette, brushwork and light, with the same wall plaster texture.
+The room is seen as a cut-away of a doll's house: straight from the front like a theatre stage, eye level, the back wall parallel to the picture plane, no side walls and no room corners visible, no fisheye. The ceiling occupies the top 12% of the image. The floor starts at 77% of the image height and fills the bottom of the image, exactly like in Image 1.
+A dim, warm desk lamp at the watchman's post, the rest is in cool moonlight. Floor: worn checkerboard stone tiles in ochre and dark grey. Objects from left to right (positions in % of the image width):
+- 3%-14%: a coat stand and a long wooden bench;
+- 18%-30%: a tall window with the night sky;
+- 34%-62%: the watchman's booth: a wooden counter with a small glass window, inside it a lit desk lamp, a small radio, a kettle and a key board with many hanging keys; a turnstile in front of it;
+- 66%-80%: a big board with pinned notices (blank papers, no text) and a wall clock without numbers;
+- 84%-97%: a potted palm in a tub and a fire extinguisher.
+Large calm areas of plain wall between the objects. EMPTY room: no people, no animals, no characters. No text anywhere, no letters, no numbers.

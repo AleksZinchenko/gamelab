@@ -38,8 +38,10 @@ function fit() {
 addEventListener('resize', fit); fit();
 
 await buildHouse(scene);
-// Ліна: хода дрібними частими кроками (Thoughtful Walk ×1.35), три спокійні стійки «рівненько» (ноги разом, руки вздовж тіла)
-const lina = await Actor.load('assets/lina.glb', scene, { walk: /Thoughtful_Walk/, walkRate: 1.35, idle: [/^Idle_4$/, /^Idle_3$/, /^Idle_12$/] });
+// Ліна: хода дрібними частими кроками (Thoughtful Walk ×1.35), три спокійні стійки «рівненько» (ноги разом, руки вздовж тіла).
+// Голову й шию в ході не рухаємо (walkSkip) — інакше «задумлива» хода дивиться під ноги
+const lina = await Actor.load('assets/lina.glb', scene, { walk: /Thoughtful_Walk/, walkRate: 1.35, walkSkip: /^(Head|neck|headfront|head_end)\./,
+  idle: [/^Idle_4$/, /^Idle_3$/, /^Idle_12$/] });
 
 // Позначка дотику: кільце, що розходиться і зникає — гравець бачить, що гра його «почула» (дрібний juice)
 const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40),
