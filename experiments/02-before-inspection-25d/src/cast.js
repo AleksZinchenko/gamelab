@@ -13,6 +13,8 @@ const CAST = {
   // хімік: високий, біля полиць з колбами; сьорбає щось із пробірки, потирає руки
   miron: { url: 'assets/miron.glb', height: 480, x: 3080, d: 0.2, face: -1,
     walk: /^Thoughtful_Walk$/, idle: [/^Idle_9$/, /^Idle_7$/], gest: { drink: /Drink/, rub: /Hand_Rub/ },
+    // руки в ході — як у Ліни (та сама Thoughtful_Walk тримає руки «крильцями»): постава зі стійки, менший мах, лікті вперед
+    walkArms: { from: 0, swing: 0.5, fwd: 6, elbow: 16, elbowGain: 0.8 },
     range: [2780, 3280],
     plan: [['drink'], ['rub'], ['walk'], ['idle']] },
   // старий фізик: спить за своїм столом зліва (сидить на кріслі, обличчям до столу, тобто ліворуч).
