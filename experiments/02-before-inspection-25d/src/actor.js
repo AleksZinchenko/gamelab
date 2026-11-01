@@ -42,8 +42,9 @@ export class Actor {
     // walkSkip — кістки, яких хода не чіпає (напр. голова й шия): «задумлива» хода опускає голову вниз,
     // а без цих доріжок голова лишається в спокійній позі моделі — дивиться вперед, як у мальованої Ліни
     if (clips.walkSkip) walk.tracks = walk.tracks.filter((t) => !clips.walkSkip.test(t.name));
-    this.walkAct = this.mixer.clipAction(walk);
     this.idles = clips.idle.map((re) => this.mixer.clipAction(clip(re)));
+    if (clips.walkArms) armsFromIdle(walk, this.idles[clips.walkArms.from || 0], clips.walkArms, model, this.mixer);
+    this.walkAct = this.mixer.clipAction(walk);
     // швидкість ходи міряємо з самої анімації — тоді ступні не ковзають по підлозі за будь-якої ходи
     // walkRate — темп кроків: >1 — ті самі кроки, але частіше (і швидкість росте разом з ним, ступні не ковзають)
     const rate = clips.walkRate || 1;
@@ -168,6 +169,78 @@ export class Actor {
     this.shadow.position.set(this.x, y + 2, 39 + this.d * 120); this.shadow.scale.set(85 * k, 16 * k, 1);
     this.mixer.update(dt);
   }
+}
+
+// Руки в ході: постава — зі стійки, розмах — з ходи.
+// Чужа хода (рухи з бібліотеки зняті з інших людей) може тримати руки відведеними і кисті відігнутими — на Ліні
+// з її халатом це виглядає як руки, заломлені в ліктях. Тому кожну кістку руки розкладаємо на дві частини:
+//   середня поза в ході (mean) — «як тримає руку весь час» — її викидаємо і ставимо позу зі стійки (rest);
+//   відхилення від середньої (mean⁻¹·q) — «розмах у такт крокам» — лишаємо, помножене на swing (1 — як було).
+// Кути тут — кватерніони (quaternion: чотири числа, якими 3D-рушії записують поворот без «замикання осей»).
+// Потім — дві поправки «як у живих людей» (o — налаштування з main.js, кути в градусах):
+//   fwd — весь розмах зсунутий уперед: рука менше відходить назад за спину;
+//   elbow — лікті трохи зігнуті вперед весь час, а на махові вперед — ще на elbowGain від кута маху.
+function armsFromIdle(walk, idleAct, o, model, mixer) {
+  const Q = THREE.Quaternion, ARM = /(Shoulder|Arm|ForeArm|Hand)\.quaternion$/, swing = o.swing ?? 1;
+  const idle = idleAct.getClip();
+  for (const t of walk.tracks.filter((t) => ARM.test(t.name))) {
+    const it = idle.tracks.find((x) => x.name === t.name); if (!it) continue;
+    const rest = new Q().fromArray(it.values, 0);         // поза кістки в першому кадрі стійки
+    const v = t.values, n = v.length / 4, qs = [];
+    // середній поворот: сума кватерніонів (усі «в одну півсферу», бо q і −q — той самий поворот), нормована
+    const mean = new Q(0, 0, 0, 0);
+    for (let i = 0; i < n; i++) {
+      const q = new Q().fromArray(v, i * 4); if (i && q.dot(qs[0]) < 0) q.set(-q.x, -q.y, -q.z, -q.w);
+      qs.push(q); mean.x += q.x; mean.y += q.y; mean.z += q.z; mean.w += q.w;
+    }
+    mean.normalize(); const inv = mean.clone().invert(), id = new Q();
+    const s = /Hand/.test(t.name) ? swing * 0.5 : swing;   // кисть — удвічі спокійніше: інакше «махає» долонею назовні
+    qs.forEach((q, i) => {
+      const delta = inv.clone().multiply(q);               // розмах відносно середньої пози
+      id.set(0, 0, 0, 1).slerp(delta, s);                  // s < 1 — менший розмах
+      rest.clone().multiply(id).toArray(v, i * 4);         // нова поза = стійка + розмах
+    });
+  }
+  // Поправки рахуємо від пози стійки: ставимо модель у перший кадр стійки, щоб знати, куди дивляться кістки
+  idleAct.reset().play(); mixer.setTime(0); model.updateMatrixWorld(true);
+  const DEG = Math.PI / 180, rot = (ax, a) => new Q().setFromAxisAngle(ax, a);
+  for (const side of ['Left', 'Right']) {
+    const [arm, fore, hand] = ['Arm', 'ForeArm', 'Hand'].map((b) => model.getObjectByName(side + b));
+    const ta = walk.tracks.find((t) => t.name === side + 'Arm.quaternion');
+    const tf = walk.tracks.find((t) => t.name === side + 'ForeArm.quaternion');
+    if (!arm || !fore || !hand || !ta || !tf) continue;
+    const axA = hingeAxis(arm, hand, model), axF = hingeAxis(fore, hand, model), restA = arm.quaternion.clone();
+    // плече: кут маху в кожному кадрі (+ вперед) і зсув уперед на fwd
+    const swingA = [];
+    for (let i = 0; i < ta.values.length / 4; i++) {
+      const q = new Q().fromArray(ta.values, i * 4);
+      // мах = поворот відносно стійки, розкладений на вісь «уперед-назад» (так звана «закрутка» навколо осі)
+      const r = q.clone().multiply(restA.clone().invert());
+      swingA.push(2 * Math.atan2(r.x * axA.x + r.y * axA.y + r.z * axA.z, r.w));
+      q.premultiply(rot(axA, (o.fwd || 0) * DEG)).toArray(ta.values, i * 4);
+    }
+    // лікоть: базовий згин + додатковий, коли рука йде вперед (кадри передпліччя й плеча в Meshy збігаються;
+    // якщо раптом ні — лише базовий згин)
+    const same = tf.times.length === ta.times.length;
+    for (let i = 0; i < tf.values.length / 4; i++) {
+      const extra = same ? Math.max(0, swingA[i]) * (o.elbowGain || 0) : 0;
+      new Q().fromArray(tf.values, i * 4).premultiply(rot(axF, (o.elbow || 0) * DEG + extra)).toArray(tf.values, i * 4);
+    }
+  }
+  idleAct.stop();
+}
+
+// Вісь «вперед-назад» для кістки (шарнір плеча чи ліктя): бічна вісь героя, записана в координатах батьківської
+// кістки (поворот кістки задається відносно батька). Знак перевіряємо пробою: повертаємо на 10° і дивимось,
+// чи кисть пішла вперед (+z моделі); якщо назад — вісь перевертаємо. Так не треба знати, як Meshy розвернув осі.
+function hingeAxis(bone, hand, model) {
+  const Q = THREE.Quaternion, V = THREE.Vector3;
+  const ax = new V(1, 0, 0).applyQuaternion(model.getWorldQuaternion(new Q()))
+    .applyQuaternion(bone.parent.getWorldQuaternion(new Q()).invert());
+  const z = () => model.worldToLocal(hand.getWorldPosition(new V())).z, z0 = z(), q0 = bone.quaternion.clone();
+  bone.quaternion.premultiply(new Q().setFromAxisAngle(ax, 0.17)); bone.updateMatrixWorld(true);
+  const z1 = z(); bone.quaternion.copy(q0); bone.updateMatrixWorld(true);
+  return z1 > z0 ? ax : ax.negate();
 }
 
 // Швидкість ходи з анімації (px/с). Анімація йде «на місці»: ступня, що стоїть на підлозі, їде назад рівно з тією
