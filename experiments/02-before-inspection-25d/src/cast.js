@@ -17,7 +17,8 @@ const CAST = {
     plan: [['drink'], ['rub'], ['walk'], ['idle']] },
   // старий фізик: спить за своїм столом зліва (сидить на кріслі, обличчям до столу, тобто ліворуч).
   // Його хода (старече човгання), «чухає потилицю» і «ура» — на потім, коли прокинеться
-  akademik: { url: 'assets/akademik.glb', height: 460, x: 560, d: 0.02, face: -1, ang: -1.35,
+  // foot: 80 — п'ятно ширше, ніж у тих, хто стоїть: він сидить, а крісло й лікті на столі займають більше місця
+  akademik: { url: 'assets/akademik.glb', height: 460, x: 560, d: 0.02, face: -1, ang: -1.35, foot: 80,
     walk: /Elderly/, idle: [/Sleep_on_Desk/], gest: { scratch: /Confused_Scratch/, cheer: /Cheer/ },
     plan: [] },
 };

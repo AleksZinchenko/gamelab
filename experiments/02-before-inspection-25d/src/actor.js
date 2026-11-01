@@ -7,6 +7,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const HEIGHT = 400;           // зріст героя у пікселях кімнати за замовчуванням (Ліна: ≈0.8 висоти дверей); інші — clips.height
 const TILT = 0.14;           // нахил моделі до глядача (рад): ми дивимось на кімнату трохи згори, як на малюнку
 const FEET_BACK = 210, FEET_FRONT = 120;   // y ступнів біля задньої стіни і біля глядача (рядки 870…960 малюнка)
+// «П'ятно» героя на підлозі — еліпс: foot px у боки (x) і foot·FLAT у глибину (у «пікселях підлоги», d=1 ≈ 300).
+// Тіло в плечах трохи ширше, ніж від грудей до спини, тому еліпс ледь сплюснутий (0.9). З 0.6 Ліна проходила так близько
+// перед Двічі, що на екрані виглядало, ніби треться об нього плечем: уся підлога — лише 90 рядків малюнка.
+// Щоб рахувати було просто, глибину ділимо на FLAT — еліпс стає колом (так званий «перехід у круглі координати»).
+const FLAT = 0.9, MARGIN = 1.08;           // MARGIN — запас при обході: 8 % ширше за п'ятно, щоб не чіпляти плечем
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
 export class Actor {
   // clips: які рухи брати з файлу — { walk: /…/, idle: [/…/, /…/] } (кілька стійок чергуються — так герой живіший);
@@ -64,6 +70,10 @@ export class Actor {
     // стан: позиція в кімнаті (x, глибина d), ціль, куди дивиться (face: 1 праворуч, -1 ліворуч)
     this.x = clips.x ?? 1300; this.d = clips.d ?? 0.4; this.target = null; this.face = clips.face ?? 1; this.ang = this.face * 0.6;
     this.rest = clips.ang ?? null;   // свій кут стоячи (Академік спить боком до столу); пішов — забуваємо
+    // обхід інших: foot — півширина п'ятна; others — кого обходити (задає main.js);
+    // avoid — кого зараз обходимо і з якого боку (пам'ятаємо, щоб не смикатись «то зліва, то справа»);
+    // meet — до кого підійшли (тапнули прямо на колегу): дійшли — повертаємось до нього обличчям
+    this.foot = clips.foot ?? 55; this.others = []; this.avoid = null; this.meet = null;
   }
 
   // плавний перехід між рухами (crossfade) — щоб хода не «вмикалась» ривком
@@ -73,7 +83,55 @@ export class Actor {
   }
   fadeTo(a, secs) { if (a === this.act) return; a.reset().play(); a.crossFadeFrom(this.act, secs, false); this.act = a; }
 
-  walkTo(x, d = this.d) { this.target = { x, d }; this.rest = null; }
+  walkTo(x, d = this.d) { this.target = { x, d }; this.rest = null; this.meet = null; }
+
+  // Ціль усередині чийогось п'ятна (тапнули на колегу або колега став на місце, куди йдемо) —
+  // переносимо ціль на край п'ятна з нашого боку: героїня підходить і стає поруч, а не «влазить» у нього
+  unblock() {
+    for (const o of this.others) {
+      const R = this.foot + o.foot;
+      if (Math.hypot(this.target.x - o.x, (this.target.d - o.d) * 300 / FLAT) >= R) continue;
+      let ux = this.x - o.x, uz = (this.d - o.d) * 300 / FLAT, u = Math.hypot(ux, uz);
+      if (u < 1) { ux = -o.face; uz = 0; u = 1; }          // стоїмо впритул — стаємо перед його обличчям
+      this.target = { x: o.x + ux / u * R * MARGIN, d: clamp01(o.d + uz / u * R * MARGIN * FLAT / 300) };
+      this.meet = o;
+    }
+  }
+
+  // Кермування (steering): куди ступити цього кадру. dx, dz — до цілі (dz у «пікселях підлоги»).
+  // Якщо прямий шлях перетинає чиєсь п'ятно — йдемо по дотичній до нього (як мотузка, що огинає стовп),
+  // кожен кадр заново: колеги теж рухаються, тож план шляху наперед застарів би за секунду.
+  steer(dx, dz, dist) {
+    const gx = dx, gz = dz / FLAT, g = Math.hypot(gx, gz);   // шлях у круглих координатах
+    let hit = null;
+    for (const o of this.others) {
+      const R = this.foot + o.foot;
+      const cx = o.x - this.x, cz = (o.d - this.d) * 300 / FLAT, c = Math.hypot(cx, cz);
+      if (c <= R) continue;     // уже впритул (колега сам підійшов) — не застрягаємо, йдемо як ішли
+      // найближча до колеги точка нашого шляху: якщо вона в його п'ятні — шлях заблоковано
+      const t = Math.min(g, Math.max(0, (cx * gx + cz * gz) / g));
+      if (Math.hypot(gx / g * t - cx, gz / g * t - cz) >= R) continue;
+      if (!hit || c < hit.c) hit = { o, cx, cz, c, R };      // обходимо найближчого
+    }
+    if (!hit) { this.avoid = null; return [dx / dist, dz / dist]; }
+    // дві дотичні з нашої точки до кола (зліва і справа від колеги): кут на центр ± кут дотичної
+    const { o, cx, cz, c, R } = hit;
+    const base = Math.atan2(cz, cx), a = Math.asin(Math.min(1, R * MARGIN / c)), reach = Math.sqrt(Math.max(0, c * c - R * R));
+    const dirs = [1, -1].map((s) => {
+      const ang = base + s * a, ux = Math.cos(ang), uz = Math.sin(ang);
+      const d = this.d + uz * reach * FLAT / 300;           // глибина, де пройдемо повз колегу
+      // оцінка боку: менше відхилення від цілі — краще; вихід за межі підлоги (у стіну чи до глядача) — штраф
+      const score = (ux * gx + uz * gz) / g - (d < -0.02 || d > 1.02 ? 10 : 0);
+      return { s, ux, uz, score };
+    });
+    let pick = dirs[0].score >= dirs[1].score ? dirs[0] : dirs[1];
+    // уже обходимо цього колегу — тримаємо обраний бік (інакше на рівних героїня «тупцює» між двома боками)
+    if (this.avoid?.o === o) pick = dirs.find((v) => v.s === this.avoid.s && v.score > -5) || pick;
+    this.avoid = { o, s: pick.s };
+    // назад зі «круглих» координат у справжні: глибину множимо на FLAT і знову нормуємо довжину кроку до 1
+    const rx = pick.ux, rz = pick.uz * FLAT, n = Math.hypot(rx, rz);
+    return [rx / n, rz / n];
+  }
   // жест n разів поспіль (лише стоячи); повертає false, якщо такого жесту нема
   gesture(name, n = 1) {
     const a = this.gests[name]; if (!a || this.target) return false;
@@ -84,13 +142,17 @@ export class Actor {
   update(dt, base = 0) {
     let dirX = 0, dirZ = 0;
     if (this.target) {
+      this.unblock();
       // глибину рахуємо у «пікселях підлоги»: d=1 ≈ 300 px кроків уперед, щоб хода вглиб не була блискавичною
       const dx = this.target.x - this.x, dz = (this.target.d - this.d) * 300, dist = Math.hypot(dx, dz);
-      if (dist < 4) { this.target = null; }
-      else {
+      if (dist < 4) {
+        this.target = null; this.avoid = null;
+        // підійшли до колеги — повертаємось до нього (стоячи герой дивиться в бік face, пів-оберту до глядача)
+        if (this.meet) { this.face = Math.sign(this.meet.x - this.x) || this.face; this.meet = null; }
+      } else {
+        [dirX, dirZ] = this.steer(dx, dz, dist);              // прямо до цілі або в обхід колеги
         const step = Math.min(dist, this.speed * dt);
-        this.x += dx / dist * step; this.d += dz / dist * step / 300;
-        dirX = dx / dist; dirZ = dz / dist;
+        this.x += dirX * step; this.d = clamp01(this.d + dirZ * step / 300);
         if (Math.abs(dirX) > 0.2) this.face = Math.sign(dirX);
       }
     }

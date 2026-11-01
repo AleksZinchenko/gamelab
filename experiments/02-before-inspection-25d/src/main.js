@@ -48,6 +48,9 @@ const decor = buildDecor(scene, house);     // живий фон: вогники
 const lina = await Actor.load('assets/lina.glb', scene, { walk: /Thoughtful_Walk/, walkRate: 1.35, walkSkip: /^(Head|neck|headfront|head_end)\./,
   idle: [/^Idle_4$/, /^Idle_3$/, /^Idle_12$/] });
 const cast = await loadCast(scene);         // колеги в лабі: Двічі, Мирон, Академік — живуть за своїм розпорядком
+// Хто кого обходить: усі всіх. Ліна огинає колег, а колеги, походжаючи, — Ліну й одне одного (ніхто ні крізь кого не йде)
+const crowd = [lina, cast.dvichi, cast.miron, cast.akademik];
+for (const a of crowd) a.others = crowd.filter((o) => o !== a);
 
 // Позначка дотику: кільце, що розходиться і зникає — гравець бачить, що гра його «почула» (дрібний juice)
 const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40),
@@ -83,5 +86,6 @@ function frame() {
   requestAnimationFrame(frame);
 }
 window.__dbg = { speed: Math.round(lina.speed) };   // для tools/shot.mjs: виміряна швидкість ходи, px/с
+window.__game = { lina, cast };                      // для перевірок з браузера (тест обходу); не в __dbg — той іде в JSON
 window.__ready = true;
 frame();
