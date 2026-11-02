@@ -75,6 +75,58 @@ export class Actor {
     // avoid — кого зараз обходимо і з якого боку (пам'ятаємо, щоб не смикатись «то зліва, то справа»);
     // meet — до кого підійшли (тапнули прямо на колегу): дійшли — повертаємось до нього обличчям
     this.foot = clips.foot ?? 55; this.others = []; this.avoid = null; this.meet = null;
+    this.items = []; if (clips.hold) this.hold(clips.hold);
+  }
+
+  // Предмет у руці: мальована картинка (гуаш з 01), «приклеєна» до кисті. Площина завжди лицем до камери
+  // (як вирізанка в театрі тіней), а кут на екрані повторює кисть. Так роблять і в 2D-іграх зі скелетною анімацією
+  // (Spine, Dragon Bones): предмет — окрема картинка на «кістці» руки.
+  // o: img — картинка; hand — 'Left' / 'Right'; size — висота картинки в px кімнати;
+  // grip: [u, v] — де в картинці кулак (частки ширини й висоти від лівого верхнього кута);
+  // mode — як тримати (пальців у скелеті Meshy нема, а кисть у рухах бібліотеки часто розкрита — тож «як кисть» не можна):
+  //   'along'   — уздовж передпліччя, як кувалду: верх картинки продовжує руку (ключ звисає, на замаху — вгору);
+  //   'upright' — рівно вертикально (в пробірці рідина), трохи хилиться за рукою (follow — частка нахилу руки);
+  // flip: true — дзеркалити картинку, коли герой дивиться ліворуч (соломинка завжди до обличчя)
+  hold(o) {
+    const model = this.yaw.children[0];
+    const hand = model.getObjectByName(o.hand + 'Hand'), fore = model.getObjectByName(o.hand + 'ForeArm');
+    if (!hand || !fore) return;
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.05, side: THREE.DoubleSide, toneMapped: false });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); mesh.visible = false;
+    new THREE.TextureLoader().load(o.img, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace; mat.map = t; mat.needsUpdate = true;
+      // зсуваємо площину так, щоб точка grip опинилась у (0, 0) — там, де ставимо кулак; далі масштаб у px
+      mesh.geometry.translate(0.5 - o.grip[0], o.grip[1] - 0.5, 0);
+      mesh.scale.set(o.size * t.image.width / t.image.height, o.size, 1); mesh.visible = true;
+    });
+    this.tilt.parent.add(mesh);
+    // центр долоні — трохи далі від зап'ястя (кістка кисті стоїть у зап'ясті): 30 % довжини передпліччя
+    this.mixer.update(0); this.tilt.updateMatrixWorld(true);
+    const palm = 0.3 * hand.getWorldPosition(new THREE.Vector3()).distanceTo(fore.getWorldPosition(new THREE.Vector3()));
+    this.items.push({ mesh, hand, fore, palm, mode: o.mode || 'along', follow: o.follow ?? 0.25, flip: !!o.flip, ang: 0 });
+  }
+
+  // кожен кадр після анімації: предмет — у долоню, кут — за передпліччям
+  updateItems() {
+    this.tilt.updateMatrixWorld(true);
+    const V = THREE.Vector3;
+    for (const it of this.items) {
+      const h = it.hand.getWorldPosition(new V()), dir = h.clone().sub(it.fore.getWorldPosition(new V())).normalize();
+      const p = h.clone().addScaledVector(dir, it.palm);
+      // екран = площина x-y (камера дивиться вздовж z). Кут передпліччя на екрані: рука вниз — −90°.
+      // Якщо передпліччя дивиться прямо в камеру — кут не визначений, лишаємо минулий (інакше предмет «крутився б дзиґою»)
+      if (Math.hypot(dir.x, dir.y) > 0.3) {
+        const a = Math.atan2(dir.y, dir.x);
+        it.ang = it.mode === 'along'
+          ? a - Math.PI / 2                                  // верх картинки — вздовж руки
+          // рівно, але хилиться за рукою: відхилення від «рука вниз» (−90°), частка follow, не більше ±35°
+          : THREE.MathUtils.clamp(Math.atan2(Math.sin(a + Math.PI / 2), Math.cos(a + Math.PI / 2)) * it.follow, -0.6, 0.6);
+      }
+      it.mesh.position.set(p.x, p.y, p.z + 1); it.mesh.rotation.z = it.ang;
+      // соломинка на картинці загнута праворуч; рука з пробіркою — попереду героя, тож до обличчя — це назад:
+      // дивиться праворуч — дзеркалимо (соломинка ліворуч, до рота), ліворуч — як намальовано
+      if (it.flip) it.mesh.scale.x = Math.abs(it.mesh.scale.x) * -this.face;
+    }
   }
 
   // плавний перехід між рухами (crossfade) — щоб хода не «вмикалась» ривком
@@ -168,6 +220,7 @@ export class Actor {
     this.tilt.position.set(this.x, y, 40 + this.d * 120); this.tilt.scale.setScalar(k);
     this.shadow.position.set(this.x, y + 2, 39 + this.d * 120); this.shadow.scale.set(85 * k, 16 * k, 1);
     this.mixer.update(dt);
+    if (this.items.length) this.updateItems();
   }
 }
 
