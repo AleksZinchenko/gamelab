@@ -14,7 +14,11 @@
     house_bakery: [[0.27, 0.42], [0.59, 0.42], [0.36, 0.84], [0.17, 0.78], [0.3, 0.78]],
     house_tall: [[0.5, 0.27], [0.5, 0.47], [0.5, 0.67], [0.78, 0.9]],
     house_wide: [[0.2, 0.58], [0.48, 0.58], [0.75, 0.58], [0.6, 0.36]],
+    townhall: [[0.125, 0.66], [0.305, 0.66], [0.494, 0.66], [0.69, 0.66], [0.853, 0.66]],
   };
+  // темні вікна, що спалахують у фіналі (мансарди ратуші, вікна аркади)
+  const WIN_DARK = { townhall: [[0.153, 0.49], [0.296, 0.49], [0.69, 0.49], [0.845, 0.49], [0.22, 0.89], [0.78, 0.89]] };
+  const HAZE = { grade: [0.9, 0.86, 0.1, 0.95], haze: [0.12, 0.17, 0.32] };   // ратуша «в глибині площі» — трохи в серпанку
 
   S.render = (t) => {
     const ST = S.state || SIM.at(t), GT = ST.t;
@@ -46,12 +50,14 @@
     for (let k = -1; k < 5; k++) L.sprite('bg_mid', k * 1440 + ((X(0.4) % 1440) + 1440) % 1440 - 1440, 260 + Y(0.4), { w: 1440,
       u: { grade: [0.7, 0.62, 0.32, 0.8], haze: [0.10, 0.14, 0.30], lod: 0.6 } });
     L.fog(700, 260, [0.003, 0.03, 0.45, 0.4], [0.22, 0.28, 0.45], 2, t, 0.2);
+    if (LV.HUB) PLAZA.sky(ST, GT, X, Y);                                     // феєрверк над площею (фінал)
 
     // ===================== ігровий план → T.comp =====================
     L.beginComp();
     // будинки
-    for (const h of LV.HOUSES) { const [tw, th] = LV.TEX[h.tex], w = tw * LV.HK, hh = th * LV.HK; if (!onScreen(h.x + w / 2, w)) continue;
-      L.sprite(h.tex, Math.round(h.x + X(1)), Math.round(GY - hh + 8 + Y(1)), { w, h: hh, flip: !!h.flip }); }
+    for (const h of LV.HOUSES) { const [tw, th] = LV.TEX[h.tex], w = tw * (h.k || LV.HK), hh = th * (h.k || LV.HK); if (!onScreen(h.x + w / 2, w)) continue;
+      L.sprite(h.tex, Math.round(h.x + X(1)), Math.round(GY - hh + 8 + Y(1)), { w, h: hh, flip: !!h.flip, u: h.haze ? HAZE : undefined }); }
+    if (LV.HUB) { PLAZA.clock(ST, GT, X, Y); PLAZA.signs(ST, X, Y); }
     // ліхтарі: хитаються від влучань; запалений — тепле світло і пляма на снігу
     LV.LAMPS.forEach((lx, i) => { if (!onScreen(lx)) return; const h = LV.LAMP_H, w = L.hsz('lamp', h), x = lx + X(1), y = GY + 6 + Y(1);
       L.sprite('lamp', 0, 0, { m: M.of(M.t(Math.round(x), Math.round(y)), M.r(ST.la[i][0] * 0.06)), w, h, pivot: [w / 2, h] }); });
@@ -62,6 +68,7 @@
     { const g = A('ground'), k = 0.8, gw = g.w * k, walk = (g.walk || 14) * k, x0 = Math.floor(camX / gw) * gw - gw;
       for (let x = x0; x < camX + W + gw; x += gw - 1) L.sprite('ground', Math.round(x + X(1)), Math.round(GY - walk + Y(1)), { w: gw, h: g.h * k });
       L.solid(0, GY - walk + g.h * k - 4 + Y(1), W, 400, [0.05, 0.06, 0.1]); }
+    if (LV.HUB) PLAZA.tree(ST, GT, t, X, Y);                                 // ялинка посеред площі — перед ратушею, за героєм
 
     // предмети, вороги, герой
     DRAW.items(ST, GT, t, X, Y, onScreen);
@@ -71,16 +78,20 @@
     FX.events(ST, GT, t, X, Y);
 
     // ===================== світло: вікна, ліхтарі (додається поверх — «світить») =====================
-    for (const h of LV.HOUSES) { const [tw, th] = LV.TEX[h.tex], w = tw * LV.HK, hh = th * LV.HK; if (!onScreen(h.x + w / 2, w)) continue;
-      WIN[h.tex].forEach(([u, v], j) => { const fl = 0.85 + 0.1 * Math.sin(t * 7.3 + j * 3 + h.x) + 0.05 * Math.sin(t * 13.1 + j);
+    const fest = LV.HUB ? PLAZA.lit(ST, GT) : 0;                             // фінал: у всіх вікнах світліше, темні — загоряються
+    for (const h of LV.HOUSES) { const k = h.k || LV.HK, [tw, th] = LV.TEX[h.tex], w = tw * k, hh = th * k, r = h.k ? 0.7 : 1; if (!onScreen(h.x + w / 2, w)) continue;
+      const win = (u, v, j, amt) => { const fl = 0.85 + 0.1 * Math.sin(t * 7.3 + j * 3 + h.x) + 0.05 * Math.sin(t * 13.1 + j);
         const wx = h.x + (h.flip ? 1 - u : u) * w + X(1), wy = GY - hh + 8 + v * hh + Y(1);
-        L.glow(wx, wy, 120, WARM, 0.22 * fl, 2.6); L.glow(wx, wy, 40, [1, 0.85, 0.55], 0.25 * fl, 3.5); }); }
+        L.glow(wx, wy, 120 * r, WARM, 0.22 * fl * amt, 2.6); L.glow(wx, wy, 40 * r, [1, 0.85, 0.55], 0.25 * fl * amt, 3.5); };
+      WIN[h.tex].forEach(([u, v], j) => win(u, v, j, 1 + 0.6 * fest));
+      (WIN_DARK[h.tex] || []).forEach(([u, v], j) => { const on = fest * SS(0, 0.3, GT - ST.fin - 1.2 - j * 0.25); if (on > 0) win(u, v, j + 9, 1.3 * on); }); }
     LV.LAMPS.forEach((lx, i) => { if (!onScreen(lx)) return; const lit = ST.lit[i] >= 0 ? SS(0, 0.35, GT - ST.lit[i]) : 0;
       const a = ST.la[i][0] * 0.06, lpx = lx + X(1) + Math.sin(a) * (LV.LAMP_H - 60), lpy = GY - LV.LAMP_H + 66 + Y(1);
       const fl = 0.92 + 0.08 * Math.sin(t * 9.1 + i * 2) * Math.sin(t * 5.3 + i);
       if (lit > 0) { L.glow(lpx, lpy, 330, WARM, 0.35 * lit * fl, 2.2); L.glow(lpx, lpy, 50, [1, 0.92, 0.7], 0.8 * lit * fl, 3);
         L.glow(lx + X(1), GY + Y(1) + 10, 220, WARM, 0.18 * lit, 2.4); }
       else L.glow(lpx, lpy, 30, [0.5, 0.6, 0.9], 0.15, 3); });
+    if (LV.HUB) PLAZA.light(ST, GT, t, X, Y);
 
     // ===================== сніг: два шари пластівців, вітер з симуляції =====================
     if (!L.NOFX) for (let i = 0; i < 150; i++) { const near = i % 3 === 0, sp = near ? 120 + 40 * rnd(i, 1) : 55 + 30 * rnd(i, 1);

@@ -1,21 +1,29 @@
 // live/hud.js — інтерфейс: лічильники в грі (рукавички-життя, солодощі, шишки, хлопавки, подарунки, прикраси)
-// і всі екрани-меню: головне меню, «Керування», пауза, «Вулицю врятовано!». Стан меню — window.UI;
-// index.html передає сюди клавіші й кліки, а назад отримує дію: 'start', 'resume', 'restart', 'tomenu'.
+// і всі екрани-меню: головне меню, «Керування», пауза, «Вулицю врятовано!», фінал на площі. Стан меню — window.UI;
+// index.html передає сюди клавіші й кліки, а назад отримує дію: 'start', 'resume', 'restart', 'again', 'tohub', 'tomenu'.
+// На площі (хабі) свій HUD: торба з добром, що вже висить на ялинці, написи на табличках брам, підказка біля брами.
 (function () {
   const L = LIB, SS = L.SS, W = SIM.VIEW.W, H = SIM.VIEW.H, LV = SIM.LV;
-  const UI = (window.UI = { mode: 'menu', sel: 0, t0: 0, now: 0, sound: true, music: 0.7, hits: [], hover: -1 });
+  const UI = (window.UI = { mode: 'menu', sel: 0, t0: 0, now: 0, sound: true, music: 0.7, hits: [], hover: -1, fade: 0 });
   const CREAM = '#fbecc8', INK = '#2a0f12', GOLD = '#ffd66b';
   const ITEMS = {
-    menu: () => [['play', 'Грати'], ['controls', 'Керування'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['music', 'Музика: ' + Math.round(UI.music * 100) + '%']],
-    pause: () => [['resume', 'Продовжити'], ['restart', 'Почати вулицю знову'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']],
+    menu: () => [['play', 'Грати'], ['controls', 'Керування'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['music', 'Музика: ' + Math.round(UI.music * 100) + '%'],
+      ...(PROG.any() ? [['reset', 'Зняти прикраси (нова гра)']] : [])],
+    // пауза на площі коротша; на вулиці можна повернутись на площу (крадене тоді лишається у злодюжок)
+    pause: () => LV.HUB ? [['resume', 'Продовжити'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']]
+      : [['resume', 'Продовжити'], ['restart', 'Почати вулицю знову'], ['tohub', 'Повернутись на площу'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']],
     controls: () => [['back', 'Назад']],
-    done: () => [['again', 'Пройти ще раз'], ['menu', 'Головне меню']],
+    done: () => [['tohub', 'На площу з добром'], ['again', 'Пройти ще раз'], ['menu', 'Головне меню']],
+    final: () => [['walk', 'Гуляти площею'], ['menu', 'Головне меню']],
   };
   UI.open = (mode) => { UI.mode = mode; UI.sel = 0; UI.t0 = UI.now; if (window.AUDIO) AUDIO.ui('open'); };
   // дія пункту меню → що робити грі (index.html)
   const activate = (id) => { if (window.AUDIO) AUDIO.ui('ok');
-    if (id === 'play' || id === 'again') return 'start';
-    if (id === 'resume') return 'resume';
+    if (id === 'play') return 'start';
+    if (id === 'again') return 'again';
+    if (id === 'tohub') return 'tohub';
+    if (id === 'resume' || id === 'walk') return 'resume';
+    if (id === 'reset') { PROG.reset(); UI.sel = 0; return null; }
     if (id === 'restart') return 'restart';
     if (id === 'menu') return 'tomenu';
     if (id === 'controls') { UI.open('controls'); return null; }
@@ -28,7 +36,7 @@
     if (c === 'ArrowDown' || c === 'KeyS') { UI.sel = (UI.sel + 1) % it.length; if (window.AUDIO) AUDIO.ui('move'); return null; }
     if ((c === 'ArrowLeft' || c === 'ArrowRight') && it[UI.sel] && it[UI.sel][0] === 'music') {
       UI.music = Math.max(0, Math.min(1, Math.round((UI.music + (c === 'ArrowLeft' ? -0.1 : 0.1)) * 10) / 10)); if (window.AUDIO) AUDIO.apply(); return null; }
-    if (c === 'Escape') { if (UI.mode === 'pause') return activate('resume'); if (UI.mode === 'controls') return activate('back'); return null; }
+    if (c === 'Escape') { if (UI.mode === 'pause' || UI.mode === 'final') return activate('resume'); if (UI.mode === 'controls') return activate('back'); return null; }
     if (c === 'Enter' || c === 'Space' || c === 'KeyX' || c === 'KeyJ') return it[UI.sel] ? activate(it[UI.sel][0]) : null;
     return null; };
   const hitAt = (x, y) => UI.hits.findIndex((b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
@@ -49,12 +57,40 @@
   H_.draw = (ST, GT, t) => {
     UI.now = t; UI.hits = [];
     if (RENDER) UI.mode = SCENE.state ? 'play' : 'none';
-    if (UI.mode === 'play' || UI.mode === 'pause' || UI.mode === 'done') hudPlay(ST, GT, t);
+    if ((UI.mode === 'play' || UI.mode === 'pause' || UI.mode === 'done' || UI.mode === 'final') && ST) (LV.HUB ? hudHub : hudPlay)(ST, GT, t);
     if (UI.mode === 'menu') menu(t);
     else if (UI.mode === 'controls') controls(t);
     else if (UI.mode === 'pause') overlay('Пауза', ITEMS.pause(), t, 0.55);
     else if (UI.mode === 'done') done(ST, GT, t);
+    else if (UI.mode === 'final') final(ST, GT, t);
+    if (UI.fade > 0.003) L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, UI.fade);   // затемнення між площею і вулицею
   };
+
+  // ---------------- HUD площі ----------------
+  const ORN_N = ['orn_red', 'orn_gold', 'orn_blue'];
+  function hudHub(ST, GT, t) {
+    const sx = (x) => x - ST.cam, sy = (y) => y - ST.camY;
+    // написи на табличках брам (дошку й стовп малює plaza.js у грі)
+    LV.GATES.forEach((g, i) => { const b = PLAZA.signBox(g, i);
+      L.label('gate' + i, g.name, sx(g.x), sy(b.y + b.h / 2), Object.assign({ al: 0.5, a: g.to ? 1 : 0.6 }, PLAZA.LBL)); });
+    // біля брами — підказка над героєм
+    const g = UI.mode === 'play' && !ST.exit && LV.GATES.find((q) => Math.abs(ST.x - q.x) < 110);
+    if (g) { const s = g.to ? '↑  вирушити' : 'Зачинено — скоро!', o = { size: 30, col: g.to ? GOLD : CREAM, out: INK }, w = L.labelW('gp', s, o) + 40;
+      const x = sx(ST.x), y = sy(ST.y) - 196 + 3 * Math.sin(t * 4);                      // над головою, під табличкою
+      L.rrect(x - w / 2, y - 27, w, 54, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.8); L.uiBox('gpbox', x - w / 2, y - 27, w, 54, 4);
+      L.label('gp', s, x, y, Object.assign({ al: 0.5 }, o)); }
+    // торба: скільки добра ще не на ялинці
+    if (ST.bagQ.length) counter('bag', 'sack', '×' + ST.bagQ.length, 30, 28, bumpOf(ST, GT, ['hang']));
+    // справа — що вже на ялинці: подарунки, зірка, прикраси (порожні слоти тьмяні — видно, чого бракує)
+    const T = ST.tree, on = (v) => v !== -1 && GT >= v;
+    const gx = W - 40 - 3 * 74; L.rrect(gx - 16, 24, 3 * 74 + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, 3 * 74 + 26, 76, 0);
+    [['gift_red', T.gift[0]], ['gift_green', T.gift[1]], ['star', T.star]].forEach(([n, v], i) => icon(n, gx + 32 + i * 74, 62, 54, on(v) ? 1 : 0.22));
+    const ox = W - 40 - 5 * 46; L.rrect(ox - 14, 108, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns', ox - 14, 108, 5 * 46 + 22, 56, 0);
+    T.orn.forEach((v, i) => icon(ORN_N[(LEVELS.street.ORNAMENTS[i] || [0, 0, 0])[2]], ox + 18 + i * 46, 136, 40, on(v) ? 1 : 0.22));
+    const ht = ST.t; if (ht < 7 && UI.mode === 'play') { const a = SS(0, 0.5, ht) * (1 - SS(6, 7, ht)), s = LV.HINT, w = L.labelW('hint', s, { size: 28 }) + 40;
+      L.rrect(W / 2 - w / 2, H - 92, w, 54, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.75 * a); L.uiBox('hint', W / 2 - w / 2, H - 92, w, 54, 4);
+      L.label('hint', s, W / 2, H - 65, { size: 28, col: CREAM, out: INK, al: 0.5, a }); }
+  }
 
   function hudPlay(ST, GT, t) {
     // рукавички-життя: втрачена — тьмяна й «падає»
@@ -92,6 +128,20 @@
       L.label('btn' + i, label, cx, y + h / 2, { size: sz, col: sel ? GOLD : CREAM, out: INK, al: 0.5, a: k }); });
   }
 
+  // фінал: зірка на ялинці — підсумок і що далі
+  function final(ST, GT, t) {
+    const k = SS(0, 0.5, t - UI.t0); L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, 0.35 * k);
+    const w = 1100, h = 500, x = W / 2 - w / 2, y = 120; panel(x, y, w, h, k); L.uiBox('fin', x, y, w, h, 8);
+    L.label('ft', 'Ялинка засяяла!', W / 2, y + 74, { size: 80, col: '#ffe7b0', out: '#5a1018', al: 0.5, a: k });
+    L.label('fs', 'Зірка на місці — у містечку буде Різдво.', W / 2, y + 150, { size: 34, col: '#cfd8ff', out: '#0b1230', al: 0.5, a: k });
+    const T = ST.tree, n = (a) => a.filter((v) => v !== -1).length;
+    const rows = [['orn_gold', 'Прикраси', n(T.orn) + ' / ' + T.orn.length], ['gift_red', 'Подарунки', n(T.gift) + ' / ' + T.gift.length], ['it_cane', 'Цукерки на гілках', n(T.candy) + ' / ' + T.candy.length]];
+    rows.forEach(([ic, a, b], i) => { const yy = y + 236 + i * 70; icon(ic, x + 170, yy, 54, k);
+      L.label('fr' + i, a, x + 230, yy, { size: 40, col: CREAM, out: INK, a: k }); L.label('fv' + i, b, x + w - 140, yy, { size: 44, col: GOLD, out: INK, al: 1, a: k }); });
+    L.label('fn', 'Сірі Шарфи ще ховаються на дахах, біля річки й у ратушній вежі… далі буде', W / 2, y + h - 40, { size: 28, col: '#9fb0d8', out: '#0b1230', al: 0.5, a: k });
+    buttons(ITEMS.final(), W / 2, y + h + 40, t);
+  }
+
   function menu(t) {
     // затемнення зверху, щоб назва читалась на тлі живої сцени (позаду грає демо)
     for (let i = 0; i < 8; i++) L.solid(0, i * 50, W, 50, [0.01, 0.02, 0.06], 0, 0, 0, 0.5 * (1 - i / 8));
@@ -101,7 +151,7 @@
     L.label('sub', 'Різдвяна пригода в містечку фахверкових будиночків', W / 2, 282, { size: 34, col: '#cfd8ff', out: '#0b1230', al: 0.5, a: SS(0.4, 1.2, t - UI.t0) });
     L.uiBox('titlebox', 0, 60, W, 260, 8);
     icon('star', W / 2 - 560, 175 + bob, 70, k); icon('star', W / 2 + 560, 175 - bob, 70, k);
-    buttons(ITEMS.menu(), W / 2, 470, t);
+    const mi = ITEMS.menu(); buttons(mi, W / 2, mi.length > 4 ? 420 : 470, t, mi.length > 4 ? 86 : 92);
     L.label('foot', 'стрілки — вибір, Enter — так, миша теж працює', W / 2, H - 50, { size: 26, col: '#9fb0d8', out: '#0b1230', al: 0.5, a: 0.8 });
     L.uiBox('footbox', 0, H - 90, W, 80, 4);
   }

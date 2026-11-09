@@ -56,8 +56,12 @@
   const START = 200, END = 9050;                      // старт героя і «фініш» вулиці
   // Розміри текстур (px) — щоб платформи рахувались і в браузері, і в node (tune.cjs), де картинок нема.
   const TEX = { house_bakery: [459, 600], house_tall: [259, 637], house_wide: [485, 556], firtub: [204, 359], bench: [325, 213],
-    barrel: [183, 207], crates: [226, 287], stall: [403, 370], snowman: [188, 271], fence: [258, 167], well: [308, 355], lamp: [131, 437] };
+    barrel: [183, 207], crates: [226, 287], stall: [403, 370], snowman: [188, 271], fence: [258, 167], well: [308, 355], lamp: [131, 437],
+    tree_square: [834, 1482], townhall: [928, 1310] };
 
-  root.LEVEL = { GY, LEN, HK, LEDGES, HOUSES, PROPS, LAMPS, LAMP_H, SWEETS, ORNAMENTS, THIEVES, BULLIES, AMMO, START, END, TEX };
+  // LEVEL — АКТИВНИЙ рівень: усі модулі тримають посилання саме на цей об'єкт, а SIM.use('hub' / 'street') підміняє
+  // його вміст. LEVELS — «полиця» з даними всіх рівнів (площу додає hub.js).
+  root.LEVEL = { name: 'street', GY, LEN, HK, LEDGES, HOUSES, PROPS, LAMPS, LAMP_H, SWEETS, ORNAMENTS, THIEVES, BULLIES, AMMO, START, END, TEX };
+  root.LEVELS = { street: Object.assign({}, root.LEVEL) };
   if (typeof module !== 'undefined') module.exports = root.LEVEL;
 })(typeof window !== 'undefined' ? window : globalThis);

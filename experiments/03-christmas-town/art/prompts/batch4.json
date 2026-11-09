@@ -1,0 +1,4 @@
+[
+ {"name": "tree_square", "prompt": "art/prompts/tree_square.txt", "size": "1024x1536", "alpha": "key", "key": "ff00ff"},
+ {"name": "townhall", "prompt": "art/prompts/townhall.txt", "ref": ["art/gen/house_bakery.png"], "size": "1024x1536", "alpha": "key", "key": "ff00ff"}
+]

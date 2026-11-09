@@ -3,6 +3,7 @@
 // SIM.at(t) — атракт-демо (програє записаний сценарій натискань), SIM.spawn + SIM.step — справжня гра в браузері.
 (function (root) {
   const LV = root.LEVEL || require('./level.js'), ACT = root.ACT || require('./actors.js');
+  if (!root.LEVELS.hub && typeof require !== 'undefined') require('./hub.js');   // у node площу підтягуємо самі (у браузері — index.html)
   const DT = 1 / 120, L = 16.0;                  // крок симуляції і довжина циклу демо (с)
   const VIEW = { W: 1920, H: 1080 }, GY = LV.GY;
   // «Відчуття» руху (px, с). JUMP дає стрибок ~360 px (2.2 зросту героя) — щоб діставати навіси й підвіконня.
@@ -13,13 +14,21 @@
 
   // ---------------- платформи з даних рівня ----------------
   // Кожна платформа — ламана [x, y ніг]; односторонні: на них стають згори, знизу пролітаєш крізь (як у більшості платформерів).
-  const SURF = [{ id: 'ground', pts: [[-600, GY], [LV.LEN + 600, GY]] }];
-  LV.HOUSES.forEach((h, hi) => { const [tw, th] = LV.TEX[h.tex], k = LV.HK;
+  // SURF будується з даних АКТИВНОГО рівня; SIM.use(...) перебудовує його (масив той самий — посилання в інших модулях живі).
+  const SURF = [];
+  function buildSurf() { SURF.length = 0; SURF.push({ id: 'ground', pts: [[-600, GY], [LV.LEN + 600, GY]] });
+  LV.HOUSES.forEach((h, hi) => { const [tw, th] = LV.TEX[h.tex], k = h.k || LV.HK;          // k — свій масштаб будинку (ратуша менша)
     const X = (lx) => h.x + (h.flip ? tw - lx : lx) * k, Y = (ly) => GY - (th - ly) * k;
     LV.LEDGES[h.tex].forEach(([x0, y0, x1, y1], li) => { const a = [X(x0), Y(y0)], b = [X(x1), Y(y1)];
       SURF.push({ id: 'h' + hi + '_' + li, pts: a[0] < b[0] ? [a, b] : [b, a] }); }); });
   LV.PROPS.forEach((p, pi) => { if (p.top === undefined) return; const [tw, th] = LV.TEX[p.tex], w = p.h * tw / th, y = GY - p.h * (1 - p.top);
     SURF.push({ id: 'p' + pi, pts: [[p.x - w * 0.42, y], [p.x + w * 0.42, y]] }); });
+  (LV.SURFX || []).forEach(([x0, y0, x1, y1], i) => SURF.push({ id: 'x' + i, pts: [[x0, y0], [x1, y1]] }));   // додаткові платформи рівня
+  }
+  buildSurf();
+  // Перейти на інший рівень: вміст LEVEL замінюється даними з полиці LEVELS, платформи перебудовуються.
+  function use(name) { if (LV.name === name || !root.LEVELS[name]) return; for (const k of Object.keys(LV)) delete LV[k];
+    Object.assign(LV, root.LEVELS[name]); buildSurf(); cache = null; }
   const yOn = (s, x) => { const p = s.pts; for (let i = 0; i < p.length - 1; i++) if (x >= p[i][0] && x <= p[i + 1][0]) {
     const u = (x - p[i][0]) / (p[i + 1][0] - p[i][0] || 1); return p[i][1] + (p[i + 1][1] - p[i][1]) * u; } return null; };
   const surfAt = (x, y, tol) => { let best = null;
@@ -45,14 +54,17 @@
     [7.4, 'act', 1], [7.5, 'act', 0], [7.8, 'act', 1], [7.9, 'act', 0], [8.5, 'jump', 1], [8.8, 'jump', 0],
     [10.6, 'alt', 1], [10.7, 'alt', 0], [12.2, 'jump', 1], [12.6, 'jump', 0]];
 
-  function create() {
-    return Object.assign({ t: 0, steps: 0, wt0: 0, vj: false,
+  function create(o) {
+    const S = Object.assign({ t: 0, steps: 0, wt0: 0, vj: false,
       x: LV.START, y: GY, vx: 0, vy: 0, ground: 'ground', face: 1, dist: 0, coyote: 0, buf: 0, prevJump: 0, prevAct: 0, prevAlt: 0, cut: false,
       landT: -9, landV: 0, jumpT: -9, hurtT: -9, shootT: -9, tossT: -9, inv: 0, hearts: 3, faint: -1, done: -1, sw: 0, combo: 0, comboT: -9,
       cones: 20, crackers: 3, cp: LV.START, scarfTh: 0, scarfOm: 0, cam: 0, camV: 0, camY: 0, camYV: 0, ev: [],
-      lit: LV.LAMPS.map(() => -1), la: LV.LAMPS.map(() => [0, 0]), aim: null }, ACT.init());
+      lit: LV.LAMPS.map(() => (LV.HUB ? -100 : -1)), la: LV.LAMPS.map(() => [0, 0]), aim: null, prevUp: 0, exit: null }, ACT.init());   // на площі ліхтарі вже горять
+    if (o && o.x !== undefined) Object.assign(S, { x: o.x, cp: o.x, face: o.face || 1 });                    // звідки заходимо (напр. з брами вулиці)
+    if (LV.onInit) LV.onInit(S, o);
+    return S;
   }
-  const spawn = (worldT) => Object.assign(create(), { vj: true, wt0: worldT });
+  const spawn = (worldT, o) => Object.assign(create(o), { vj: true, wt0: worldT });
   const outOfPlay = () => false;                 // ям нема: «програш» — лише втрата рукавичок (див. faint)
   const respawn = (S) => S;
 
@@ -64,6 +76,7 @@
     if (S.faint >= 0) { if (t - S.faint > 1.6) { Object.assign(S, { x: S.cp, y: GY, vx: 0, vy: 0, ground: 'ground', hearts: 3, faint: -1, inv: 1.5 });
         S.ev.push({ k: 'revive', t, x: S.x, y: GY }); } inp = {}; }
     if (S.done >= 0) inp = { right: S.x < LV.END + 260 ? 1 : 0 };         // фініш: герой сам добігає до ліхтаря
+    if (S.exit) inp = {};                                                  // увійшов у браму — чекаємо переходу
     S.inv = Math.max(0, S.inv - DT);
 
     // ---- ввід ----
@@ -71,6 +84,11 @@
     if (dir) S.face = dir;
     const jumpHeld = !!(inp.jump || inp.up), jumpEdge = jumpHeld && !S.prevJump; S.prevJump = jumpHeld;
     S.buf = jumpEdge ? K.BUFFER : Math.max(0, S.buf - DT);
+    // ---- брами (площа): ↑ біля брами — вирушити; зачинена — лише «стук». Тоді ↑ не стрибок ----
+    const upEdge = !!inp.up && !S.prevUp; S.prevUp = !!inp.up;
+    if (LV.GATES && upEdge && S.ground && S.faint < 0) { const g = LV.GATES.find((q) => Math.abs(S.x - q.x) < 110);
+      if (g) { S.buf = 0; if (g.to) { S.exit = g.to; S.vx = 0; S.ev.push({ k: 'gate', t, x: S.x, y: S.y, to: g.to }); }
+        else S.ev.push({ k: 'locked', t, x: g.x, y: S.y - 200 }); } }
     // ---- по горизонталі: розгін/гальмування (у повітрі керування слабше) ----
     const acc = S.ground ? K.ACC_G : K.ACC_A, target = dir * K.RUN;
     S.vx = S.vx < target ? Math.min(target, S.vx + acc * DT) : Math.max(target, S.vx - acc * DT);
@@ -91,7 +109,7 @@
         if (sy !== null && py <= sy + 1 && S.y >= sy && (!best || sy < best.y)) best = { s, y: sy }; }
         if (best) { S.landV = S.vy; S.y = best.y; S.vy = 0; S.ground = best.s.id; S.landT = t; S.ev.push({ k: 'land', t, x: S.x, y: best.y, v: S.landV }); } }
     }
-    S.x = Math.max(40, Math.min(LV.LEN + 300, S.x));
+    S.x = Math.max(LV.HUB ? 80 : 40, Math.min(LV.XMAX || LV.LEN + 300, S.x));
     // ---- стрибок (з буфером і «часом койота») ----
     if (S.buf > 0 && (S.ground || S.coyote > 0) && S.faint < 0) { S.vy = -K.JUMP; S.ground = null; S.coyote = 0; S.buf = 0; S.jumpT = t; S.cut = true;
       S.ev.push({ k: 'jump', t, x: S.x, y: S.y }); }
@@ -107,8 +125,9 @@
     if (altEdge && S.crackers > 0 && t - S.tossT > 0.5) { S.tossT = t; ACT.toss(S, t, hand(S)); }
     // ---- вороги, снаряди, предмети ----
     ACT.step(S, t, DT, W);
+    if (LV.onStep) LV.onStep(S, t);                                      // правила рівня (площа: ялинка, фінал)
     // ---- ліхтарі-чекпоінти: пробіг повз — запалився ----
-    LV.LAMPS.forEach((lx, i) => { if (S.lit[i] < 0 && S.x > lx - 30) { S.lit[i] = t; S.cp = lx; S.ev.push({ k: 'lamp', t, x: lx, y: GY - LV.LAMP_H + 60, i }); } });
+    LV.LAMPS.forEach((lx, i) => { if (S.lit[i] === -1 && S.x > lx - 30) { S.lit[i] = t; S.cp = lx; S.ev.push({ k: 'lamp', t, x: lx, y: GY - LV.LAMP_H + 60, i }); } });
     if (S.done < 0 && S.x > LV.END) { S.done = t; S.ev.push({ k: 'done', t, x: S.x, y: S.y }); }
     // ---- шарф: пружина, що відстає від руху (follow-through — «наздоганяючий» рух) ----
     const ct = Math.max(-40, Math.min(40, S.vy * 0.03)) + (S.ground ? Math.max(-30, Math.min(30, -S.vx * 0.06)) : -S.vx * 0.03);
@@ -136,6 +155,6 @@
     LV.SWEETS.forEach(([x, y], i) => { if (groundBelow(x, y) === null) out.push('sweet ' + i + ' has nothing below'); });
     return out; };
 
-  root.SIM = { DT, L, K, VIEW, HINT, HERO_H, SURF, LV, yOn, groundBelow, windAt, hand, shoulder, ARM_LEN, create, spawn, respawn, outOfPlay, step, at, scriptInput, demoCheck, selfCheck };
+  root.SIM = { DT, L, K, VIEW, HINT, HERO_H, SURF, LV, use, yOn, groundBelow, windAt, hand, shoulder, ARM_LEN, create, spawn, respawn, outOfPlay, step, at, scriptInput, demoCheck, selfCheck };
   if (typeof module !== 'undefined') module.exports = root.SIM;
 })(typeof window !== 'undefined' ? window : globalThis);

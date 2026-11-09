@@ -59,7 +59,13 @@
     const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf[want]; s.loop = true; g.gain.value = 0; g.gain.setTargetAtTime(want === 'music_game' ? 0.42 : 0.55, t0, 0.6);
     s.connect(g); g.connect(musicBus); s.start(); cur = { s, g }; curName = want; }
   // меню — спокійна, вулиця — жвава, «Вулицю врятовано!» — урочиста
-  const UIwant = () => { const m = window.UI ? UI.mode : 'menu'; return m === 'play' || m === 'pause' ? 'music_game' : m === 'done' ? 'music_done' : 'music_menu'; };
+  // на площі — спокійна (як у меню), а коли ялинка засяяла — святкова
+  const lit = () => { const S = window.SCENE && SCENE.state; return !!(S && SIM.LV.HUB && S.fin !== undefined && S.fin !== -1 && (S.fin === -100 || S.t >= S.fin)); };
+  const UIwant = () => { const m = window.UI ? UI.mode : 'menu';
+    if (m === 'final' || m === 'done') return 'music_done';
+    if (m === 'play' || m === 'pause') return SIM.LV.HUB ? (lit() ? 'music_done' : 'music_menu') : 'music_game';
+    return 'music_menu'; };
+  A.refresh = () => { music(); A.apply(); };
   A.apply = () => { if (!ctx) return; const U = window.UI || { sound: true, music: 0.7 }; const t0 = ctx.currentTime;
     sfxBus.gain.setTargetAtTime(U.sound ? 0.9 : 0, t0, 0.05); ambBus.gain.setTargetAtTime(U.sound ? 1 : 0, t0, 0.2);
     musicBus.gain.setTargetAtTime(U.music * (U.mode === 'pause' ? 0.45 : 1), t0, 0.15); };
@@ -105,6 +111,24 @@
         case 'lamp': play('bell', 0.35, 1.25, p); chime(1318, 0.09, 0.05, p, 1.2); chime(1975, 0.06, 0.15, p, 1.2); break;
         case 'faint': play('oops', 0.5, 0.7, p); break;
         case 'revive': play('revive', 0.55, 1, p); break;
+        // ---- площа ----
+        case 'gate': play('ui_open', 0.5, 0.9, p); play('whoosh', 0.45, 0.8, p); break;
+        case 'locked': play('wood', 0.6, 0.6, p); play('wood', 0.5, 0.55, p, 0.16); break;          // «тук-тук» у зачинену браму
+        case 'hang': { const d = e.fly;                                                             // річ злітає з торби і сідає на ялинку
+          noise(0.35, 500, 2200, 0.08, 'bandpass', 0, p);
+          if (e.kind === 'orn') { play('glass', 0.45, 1.05 + 0.05 * e.i, p, d); chime(note(3 + e.i, 1046), 0.1, d, p, 0.9); }
+          else if (e.kind === 'gift') { play('plate', 0.35, 0.9, p, d); play('gift', 0.5, 1, p, d); }
+          else if (e.kind === 'candy') chime(note(5 + e.i), 0.11, d, p, 0.5);
+          else { for (let j = 0; j < 8; j++) chime(note(j + 2, 784), 0.07, j * 0.15, p, 0.6); play('bell', 0.5, 1.2, p, d); }
+          break; }
+        case 'fin': {                                                                               // опівнічні дзвони, акорд, феєрверк
+          music();
+          for (let j = 0; j < 12; j++) play('bell', 0.42, 0.62, (j % 2 ? 0.25 : -0.25), 0.3 + j * 0.62);
+          [0, 4, 7, 12, 16, 19, 24].forEach((n, j) => chime(523 * Math.pow(2, n / 12), 0.12, j * 0.09, 0, 1.6));
+          for (let k = 0; k < 10; k++) { const dl = 0.8 + k * 0.7, pp = ((k * 0.37) % 1) * 1.2 - 0.6;
+            noise(0.6, 900, 80, 0.32, 'lowpass', dl, pp, 0.7);
+            for (let j = 0; j < 6; j++) noise(0.04, 3000 + 300 * j, 1600, 0.12, 'bandpass', dl + 0.1 + j * 0.05, pp, 2); }
+          break; }
         case 'done': play('done', 0.7, 1); [0, 4, 7, 12, 16, 19, 24].forEach((n, j) => chime(523 * Math.pow(2, n / 12), 0.12, j * 0.12, 0, 1.4)); play('bell', 0.4, 1, 0, 0.9); break;
       } }
     lastT = S.t;

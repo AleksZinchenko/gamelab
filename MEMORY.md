@@ -48,6 +48,9 @@
 - Код: `live/level.js` (дані рівня), `sim.js` + `actors.js` (правила), `draw.js` (маріонетки), `fx.js`, `scene.js`, `hud.js`
   (меню й HUD, стан у `window.UI`), `audio.js`. Користувач хоче: стартове меню й усі атрибути «класної гри», якісну озвучку.
 - Музика затверджена (меню / гра / фінал): Jingle Bells (Calm) / Deck the Halls B / We Wish You a Merry Christmas.
+- Площа-хаб (2026-11-09): `hub.js` + `plaza.js`; рівні міняє `SIM.use(name)` (вміст спільного об'єкта `LEVEL` з полиці
+  `LEVELS`). Фінал у зрізі запускає зірка з Пекарської (рішення користувача; з рівнем 4 — перенести до боса).
+  Прогрес — localStorage `yalynka.prog.v1`; тестові режими `?prog=bag|lit|reset`.
 
 ## Середовище
 - Локально: Windows 11, NVIDIA RTX 3050 Laptop (4 ГБ VRAM).
@@ -99,6 +102,8 @@
   Boyquotes/kenney-impact-sounds-for-godot (є footstep_snow, impact_bell, impact_wood…).
 - Wikimedia Commons (музика Kevin MacLeod) після 2 файлів дає HTTP 429: паузи 5–10 с між запитами, повтор з backoff,
   свій User-Agent. Файл відкривати на запис ПІСЛЯ успішного завантаження — інакше лишається порожній (0 байт).
+- `03/tools/ondark.py` — ПЕРШИЙ аргумент це вихідний файл (`ondark.py OUT.png a.png b.png`). Переплутав порядок —
+  ледь не перезаписав `art/gen/*.png` (врятувало лише те, що другий файл не існував).
 - Перша музика з OpenGameArt (wintery loop, chiptune) користувачу «не годиться» — для якості одразу брати
   аранжування Kevin MacLeod (Commons, пошук «Kevin MacLeod christmas»), і давати сторінку прослуховування кандидатів.
 
