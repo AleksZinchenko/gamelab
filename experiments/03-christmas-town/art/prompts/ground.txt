@@ -1,0 +1,4 @@
+Use case: tiling ground strip for a side-scrolling platformer.
+Subject: a snowy cobblestone street in strict side view: on top a thick layer of snow with a soft lumpy pixel edge (the walking surface), below it the side of the street: rounded cobblestones and a stone curb, getting darker towards the bottom.
+Composition: one horizontal strip spanning the full width, filling the middle 45% of the image height, the walking surface (top of the snow) at 30% from the strip's top; the left and right ends match so it tiles seamlessly. Above and below the strip flat solid #FF00FF.
+Constraints: no houses, no props, no people, no text.

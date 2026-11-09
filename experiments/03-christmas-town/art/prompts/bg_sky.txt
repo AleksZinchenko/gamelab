@@ -1,0 +1,4 @@
+Use case: full-frame sky backdrop for a side-scrolling platformer.
+Subject: Christmas night sky only, no landforms, no buildings. Stepped bands of colour from dark navy at the top to deep indigo near the bottom (hard pixel steps, no smooth gradient); sparse small pixel stars (single pixels and tiny plus-shaped stars); a pale crescent moon in the upper-left third; three or four long thin horizontal pixel clouds faintly lit from the moon.
+Composition: full frame, big calm empty areas, nothing touching the edges in particular.
+Constraints: no glow, no halo around the moon, no text.

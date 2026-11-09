@@ -1,0 +1,11 @@
+Use case: part sheet for a cut-out animation rig of a side-scrolling platformer hero.
+Image 2 is the approved hero: follow its design, colours, proportions and pixel size exactly; this is the SAME character split into parts.
+Subject: 6 separate parts of the hero facing right in the same slight 3/4 side view as Image 2, each complete including the areas normally hidden by other parts:
+(1) head and torso without arms and without legs: knitted red hat with pompom, face, the scarf wrapped around the neck (scarf ends cut off short), the blue coat down to its hem, empty round sleeve openings at the shoulders, nothing below the coat hem;
+(2) the near arm, hanging perfectly straight down: blue sleeve from the shoulder with a red mitten, elbow clearly readable halfway;
+(3) the far arm, the same but slightly darker, hanging perfectly straight down;
+(4) the near leg, perfectly straight: dark trouser leg from the hip with the brown boot, knee clearly readable halfway, boot pointing right;
+(5) the far leg, the same but slightly darker, perfectly straight, boot pointing right;
+(6) the long red-white striped scarf end, hanging straight down.
+Composition: the six parts in one row, upright, all at the same scale as each other (the arm as long as from the shoulder to the hip of the torso), with wide empty gaps between them; nothing touching.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no slingshot, no text.

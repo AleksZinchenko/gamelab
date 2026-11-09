@@ -1,0 +1,4 @@
+Use case: sheet of street props for a side-scrolling platformer.
+Subject: 9 separate props in strict side view: an old cast-iron street lamp with an unlit lantern (pale glass, not glowing), a low wooden fence section, a wooden barrel, two stacked wooden crates, a small snowman with a carrot nose and a bucket hat, a wooden bench, a small decorated fir tree in a wooden tub, a market stall with a red-white striped awning and an empty board, a stone well with a small roof. Snow caps on top surfaces. The lamp is about three times as tall as the barrel; the market stall is the widest.
+Composition: all props standing on one shared ground line, arranged in two rows with wide empty gaps between every prop.
+Constraints: background flat solid #FF00FF; no ground strip, no houses, no people, no text.

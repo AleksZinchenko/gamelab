@@ -1,0 +1,11 @@
+Use case: part sheet for a cut-out animation rig of an enemy in a side-scrolling platformer.
+Image 2 is the approved character: follow its design, colours, proportions and pixel size exactly; this is the SAME character split into parts.
+Subject: 6 separate parts of the skinny thief facing right in the same slight 3/4 side view as Image 2, each complete including the areas normally hidden by other parts:
+(1) head and torso without arms and without legs: flat cap, black eye mask, sly grin, the grey scarf around the neck (scarf ends cut short), the dark coat down to its hem, round empty sleeve openings at both shoulders, nothing below the coat hem;
+(2) the near arm hanging perfectly straight down: coat sleeve from the shoulder with a brown glove, elbow readable halfway;
+(3) the far arm, the same but slightly darker, perfectly straight;
+(4) the near leg perfectly straight: dark trouser leg from the hip with a brown shoe pointing right, knee readable halfway;
+(5) the far leg, the same but slightly darker, perfectly straight;
+(6) the long grey scarf end hanging straight down.
+Composition: the six parts in one row, upright, all at the same scale as each other (each limb as long as from the shoulder to the hip of the torso), with wide empty gaps; nothing touching.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no sack, no text.

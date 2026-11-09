@@ -1,0 +1,4 @@
+Use case: sheet of collectible and gameplay item icons for a side-scrolling platformer.
+Subject: 16 separate small items, each a bold readable icon in side view: candy cane, gingerbread man, wrapped candy, round swirl lollipop, red glass Christmas bauble, golden glass bauble, blue glass bauble, red gift box with gold ribbon, green gift box with red ribbon, golden star for a tree top, pine cone, red paper firecracker with a short fuse (not lit), lump of black coal, red knitted mitten, brown cloth sack full of presents, a small fir branch with three pine cones.
+Composition: a 4 by 4 grid, every item centred in its cell with wide empty gaps between items; all items at a similar size except the sack and the star which are a bit bigger.
+Constraints: background flat solid #FF00FF; no glow, no sparkles, no shadow, no text.

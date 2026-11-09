@@ -1,0 +1,9 @@
+[
+ {"name": "bg_sky", "prompt": "art/prompts/bg_sky.txt", "size": "1536x864", "alpha": "none"},
+ {"name": "bg_far", "prompt": "art/prompts/bg_far.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "bg_mid", "prompt": "art/prompts/bg_mid.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "houses_sheet", "prompt": "art/prompts/houses_sheet.txt", "ref": ["study/crops/house_ref.png"], "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "ground", "prompt": "art/prompts/ground.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "props_sheet", "prompt": "art/prompts/props_sheet.txt", "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "hero_anchor", "prompt": "art/prompts/hero_anchor.txt", "ref": ["study/crops/hero_ref.png"], "size": "1024x1536", "alpha": "key", "key": "ff00ff"}
+]

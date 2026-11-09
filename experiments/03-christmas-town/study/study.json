@@ -1,0 +1,680 @@
+{
+ "image": {
+  "ref.png": {
+   "file": "C:\\Users\\Oleksandr\\StudioProjects\\gamelab\\experiments\\03-christmas-town\\ref.png",
+   "width": 1536,
+   "height": 864,
+   "has_alpha": false,
+   "pixel_grid": {
+    "width": 1536,
+    "height": 864,
+    "crisp_candidates": {
+     "x": {
+      "scale": 3.0023,
+      "confidence": 0.031
+     },
+     "y": {
+      "scale": 1.7774,
+      "confidence": 0.053
+     }
+    },
+    "effective_detail_px": 1.12,
+    "grid_beat": {
+     "x": {
+      "period_px": 37.84,
+      "peak_ratio": 14.9
+     },
+     "y": {
+      "period_px": 15.37,
+      "peak_ratio": 4.4
+     }
+    },
+    "kind": "none",
+    "scale": null,
+    "confidence": 0.034,
+    "verdict": "not pixel art: no pixel grid found (best grid confidence x 0.03 at 3.00 px, y 0.05 at 1.78 px; no grid beat). Finest detail ~1.1 px"
+   },
+   "analysis_units": "analysis px (x1.05 = reference px)",
+   "analysis_size": [
+    1461,
+    822
+   ],
+   "palette": {
+    "method": "k-means in CIELAB (k=32) over 219394 distinct colours",
+    "size": 32,
+    "distinct_colours": 219394,
+    "ramps": [
+     {
+      "id": 0,
+      "name": "blue",
+      "share": 0.69,
+      "n": 9,
+      "dark": "#070f1c",
+      "light": "#adb4d7",
+      "hue_shift_dark_to_light": 12.9,
+      "dark_hue_name": "blue",
+      "light_hue_name": "blue",
+      "L_range": [
+       4.3,
+       73.8
+      ]
+     },
+     {
+      "id": 1,
+      "name": "neutral",
+      "share": 0.1729,
+      "n": 5,
+      "dark": "#0c0a0c",
+      "light": "#d7d2db",
+      "hue_shift_dark_to_light": 0.0,
+      "dark_hue_name": "black",
+      "light_hue_name": "grey",
+      "L_range": [
+       2.9,
+       84.8
+      ]
+     },
+     {
+      "id": 2,
+      "name": "orange",
+      "share": 0.1276,
+      "n": 15,
+      "dark": "#2c140f",
+      "light": "#eec39c",
+      "hue_shift_dark_to_light": 18.2,
+      "dark_hue_name": "red",
+      "light_hue_name": "orange",
+      "L_range": [
+       9.6,
+       81.6
+      ]
+     },
+     {
+      "id": 3,
+      "name": "yellow",
+      "share": 0.0095,
+      "n": 3,
+      "dark": "#2e3f21",
+      "light": "#e8c96a",
+      "hue_shift_dark_to_light": -48.8,
+      "dark_hue_name": "green",
+      "light_hue_name": "yellow",
+      "L_range": [
+       24.5,
+       81.8
+      ]
+     }
+    ],
+    "top_colours": [
+     {
+      "hex": "#011326",
+      "share": 0.56783,
+      "ramp": 0,
+      "L": 5.5,
+      "C": 14.9,
+      "lab_hue": 272.1
+     },
+     {
+      "hex": "#0c0a0c",
+      "share": 0.05768,
+      "ramp": 1,
+      "L": 2.9,
+      "C": 1.0,
+      "lab_hue": 324.4
+     },
+     {
+      "hex": "#241f24",
+      "share": 0.04315,
+      "ramp": 1,
+      "L": 12.5,
+      "C": 4.4,
+      "lab_hue": 325.0
+     },
+     {
+      "hex": "#070f1c",
+      "share": 0.0291,
+      "ramp": 0,
+      "L": 4.3,
+      "C": 9.2,
+      "lab_hue": 275.3
+     },
+     {
+      "hex": "#d7d2db",
+      "share": 0.02619,
+      "ramp": 1,
+      "L": 84.8,
+      "C": 5.1,
+      "lab_hue": 311.2
+     },
+     {
+      "hex": "#adb4d7",
+      "share": 0.02412,
+      "ramp": 0,
+      "L": 73.8,
+      "C": 19.1,
+      "lab_hue": 284.8
+     },
+     {
+      "hex": "#372b28",
+      "share": 0.02309,
+      "ramp": 1,
+      "L": 18.8,
+      "C": 6.4,
+      "lab_hue": 39.2
+     },
+     {
+      "hex": "#3a353e",
+      "share": 0.02281,
+      "ramp": 1,
+      "L": 23.0,
+      "C": 6.4,
+      "lab_hue": 311.5
+     },
+     {
+      "hex": "#4c2c1d",
+      "share": 0.01721,
+      "ramp": 2,
+      "L": 21.7,
+      "C": 20.5,
+      "lab_hue": 50.7
+     },
+     {
+      "hex": "#5a4a49",
+      "share": 0.01553,
+      "ramp": 2,
+      "L": 33.0,
+      "C": 7.3,
+      "lab_hue": 25.5
+     },
+     {
+      "hex": "#2c140f",
+      "share": 0.01454,
+      "ramp": 2,
+      "L": 9.6,
+      "C": 14.2,
+      "lab_hue": 34.9
+     },
+     {
+      "hex": "#7d87b6",
+      "share": 0.01376,
+      "ramp": 0,
+      "L": 57.1,
+      "C": 26.9,
+      "lab_hue": 286.2
+     }
+    ],
+    "files": [
+     "palette.png",
+     "palette.json"
+    ]
+   },
+   "outline": {
+    "candidates": [
+     {
+      "hex": "#0c0a0c",
+      "L": 2.9,
+      "share": 0.0577,
+      "touches_lighter": 0.203,
+      "neighbour_colours": 8
+     },
+     {
+      "hex": "#070f1c",
+      "L": 4.3,
+      "share": 0.0291,
+      "touches_lighter": 0.131,
+      "neighbour_colours": 6
+     },
+     {
+      "hex": "#011326",
+      "L": 5.5,
+      "share": 0.5678,
+      "touches_lighter": 0.002,
+      "neighbour_colours": 4
+     }
+    ],
+    "outline_share": 0.0155,
+    "line_width_px": 1,
+    "line_width_hist_1to8": [
+     11026,
+     5567,
+     1644,
+     471,
+     261,
+     158,
+     106,
+     77
+    ],
+    "dark_line_share": 0.016
+   },
+   "background": {
+    "border_mode": {
+     "hex": "#011326",
+     "border_share": 1.0,
+     "image_share": 0.5678
+    },
+    "most_common": {
+     "hex": "#011326",
+     "image_share": 0.5678
+    },
+    "background": "#011326",
+    "reason": "dominant border colour"
+   },
+   "values": {
+    "L_mean": 16.92,
+    "L_percentiles_5_25_50_75_95": [
+     3.7,
+     5.5,
+     5.9,
+     19.0,
+     74.3
+    ],
+    "histogram_L_0_100_20bins": [
+     123024,
+     683779,
+     51955,
+     51453,
+     42471,
+     33721,
+     27862,
+     20709,
+     19903,
+     15843,
+     14258,
+     14742,
+     14427,
+     13885,
+     16635,
+     19167,
+     23000,
+     9755,
+     3521,
+     832
+    ],
+    "band_shares_0_20_40_60_80_100": [
+     0.7579,
+     0.1039,
+     0.0539,
+     0.0534,
+     0.0309
+    ],
+    "key": "low-key (dark)",
+    "light_pools": [
+     {
+      "x": 1138,
+      "y": 208,
+      "L_blur": 61.0,
+      "colour": "#9695a9",
+      "hue": "grey"
+     },
+     {
+      "x": 1068,
+      "y": 505,
+      "L_blur": 33.6,
+      "colour": "#664c39",
+      "hue": "orange"
+     },
+     {
+      "x": 1307,
+      "y": 524,
+      "L_blur": 30.9,
+      "colour": "#5e4635",
+      "hue": "orange"
+     },
+     {
+      "x": 521,
+      "y": 863,
+      "L_blur": 29.6,
+      "colour": "#534535",
+      "hue": "orange"
+     },
+     {
+      "x": 700,
+      "y": 863,
+      "L_blur": 29.2,
+      "colour": "#4e4644",
+      "hue": "orange"
+     },
+     {
+      "x": 261,
+      "y": 863,
+      "L_blur": 25.1,
+      "colour": "#3d3c47",
+      "hue": "blue"
+     },
+     {
+      "x": 511,
+      "y": 426,
+      "L_blur": 18.6,
+      "colour": "#342b2d",
+      "hue": "red"
+     }
+    ],
+    "light_blur_sigma_analysis_px": 58.7
+   },
+   "edges": {
+    "edge_share": 0.141,
+    "density_cells_4x3": [
+     {
+      "x0": 0,
+      "y0": 0,
+      "x1": 383,
+      "y1": 288,
+      "edge_density": 0.0995
+     },
+     {
+      "x0": 383,
+      "y0": 0,
+      "x1": 767,
+      "y1": 288,
+      "edge_density": 0.1405
+     },
+     {
+      "x0": 767,
+      "y0": 0,
+      "x1": 1151,
+      "y1": 288,
+      "edge_density": 0.0959
+     },
+     {
+      "x0": 1151,
+      "y0": 0,
+      "x1": 1536,
+      "y1": 288,
+      "edge_density": 0.1097
+     },
+     {
+      "x0": 0,
+      "y0": 288,
+      "x1": 383,
+      "y1": 576,
+      "edge_density": 0.0796
+     },
+     {
+      "x0": 383,
+      "y0": 288,
+      "x1": 767,
+      "y1": 576,
+      "edge_density": 0.0935
+     },
+     {
+      "x0": 767,
+      "y0": 288,
+      "x1": 1151,
+      "y1": 576,
+      "edge_density": 0.2265
+     },
+     {
+      "x0": 1151,
+      "y0": 288,
+      "x1": 1536,
+      "y1": 576,
+      "edge_density": 0.2412
+     },
+     {
+      "x0": 0,
+      "y0": 576,
+      "x1": 383,
+      "y1": 864,
+      "edge_density": 0.1562
+     },
+     {
+      "x0": 383,
+      "y0": 576,
+      "x1": 767,
+      "y1": 864,
+      "edge_density": 0.2111
+     },
+     {
+      "x0": 767,
+      "y0": 576,
+      "x1": 1151,
+      "y1": 864,
+      "edge_density": 0.1186
+     },
+     {
+      "x0": 1151,
+      "y0": 576,
+      "x1": 1536,
+      "y1": 864,
+      "edge_density": 0.1197
+     }
+    ]
+   },
+   "tiles": {
+    "cols": 6,
+    "rows": 4,
+    "zoom": 3,
+    "overlap": 0.08,
+    "list": [
+     {
+      "row": 0,
+      "col": 0,
+      "x0": 0,
+      "y0": 0,
+      "x1": 276,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c0.png"
+     },
+     {
+      "row": 0,
+      "col": 1,
+      "x0": 236,
+      "y0": 0,
+      "x1": 532,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c1.png"
+     },
+     {
+      "row": 0,
+      "col": 2,
+      "x0": 492,
+      "y0": 0,
+      "x1": 788,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c2.png"
+     },
+     {
+      "row": 0,
+      "col": 3,
+      "x0": 748,
+      "y0": 0,
+      "x1": 1044,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c3.png"
+     },
+     {
+      "row": 0,
+      "col": 4,
+      "x0": 1004,
+      "y0": 0,
+      "x1": 1300,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c4.png"
+     },
+     {
+      "row": 0,
+      "col": 5,
+      "x0": 1260,
+      "y0": 0,
+      "x1": 1536,
+      "y1": 233,
+      "path": "tiles\\tile_r0_c5.png"
+     },
+     {
+      "row": 1,
+      "col": 0,
+      "x0": 0,
+      "y0": 199,
+      "x1": 276,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c0.png"
+     },
+     {
+      "row": 1,
+      "col": 1,
+      "x0": 236,
+      "y0": 199,
+      "x1": 532,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c1.png"
+     },
+     {
+      "row": 1,
+      "col": 2,
+      "x0": 492,
+      "y0": 199,
+      "x1": 788,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c2.png"
+     },
+     {
+      "row": 1,
+      "col": 3,
+      "x0": 748,
+      "y0": 199,
+      "x1": 1044,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c3.png"
+     },
+     {
+      "row": 1,
+      "col": 4,
+      "x0": 1004,
+      "y0": 199,
+      "x1": 1300,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c4.png"
+     },
+     {
+      "row": 1,
+      "col": 5,
+      "x0": 1260,
+      "y0": 199,
+      "x1": 1536,
+      "y1": 449,
+      "path": "tiles\\tile_r1_c5.png"
+     },
+     {
+      "row": 2,
+      "col": 0,
+      "x0": 0,
+      "y0": 415,
+      "x1": 276,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c0.png"
+     },
+     {
+      "row": 2,
+      "col": 1,
+      "x0": 236,
+      "y0": 415,
+      "x1": 532,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c1.png"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "x0": 492,
+      "y0": 415,
+      "x1": 788,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c2.png"
+     },
+     {
+      "row": 2,
+      "col": 3,
+      "x0": 748,
+      "y0": 415,
+      "x1": 1044,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c3.png"
+     },
+     {
+      "row": 2,
+      "col": 4,
+      "x0": 1004,
+      "y0": 415,
+      "x1": 1300,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c4.png"
+     },
+     {
+      "row": 2,
+      "col": 5,
+      "x0": 1260,
+      "y0": 415,
+      "x1": 1536,
+      "y1": 665,
+      "path": "tiles\\tile_r2_c5.png"
+     },
+     {
+      "row": 3,
+      "col": 0,
+      "x0": 0,
+      "y0": 631,
+      "x1": 276,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c0.png"
+     },
+     {
+      "row": 3,
+      "col": 1,
+      "x0": 236,
+      "y0": 631,
+      "x1": 532,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c1.png"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "x0": 492,
+      "y0": 631,
+      "x1": 788,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c2.png"
+     },
+     {
+      "row": 3,
+      "col": 3,
+      "x0": 748,
+      "y0": 631,
+      "x1": 1044,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c3.png"
+     },
+     {
+      "row": 3,
+      "col": 4,
+      "x0": 1004,
+      "y0": 631,
+      "x1": 1300,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c4.png"
+     },
+     {
+      "row": 3,
+      "col": 5,
+      "x0": 1260,
+      "y0": 631,
+      "x1": 1536,
+      "y1": 864,
+      "path": "tiles\\tile_r3_c5.png"
+     }
+    ],
+    "overview": "overview_grid.png"
+   },
+   "outputs": [
+    "edges.png",
+    "light.png",
+    "overview_grid.png",
+    "palette.json",
+    "palette.png",
+    "values.png"
+   ],
+   "seconds": 8.11
+  }
+ },
+ "updated": "2026-11-08 11:44:14"
+}

@@ -46,3 +46,6 @@ experiments/*/study/refs/machinarium/
 experiments/*/study/3d/
 experiments/*/study/zoom/
 experiments/*/frames/
+
+# 03: скачані звукові пакети (джерела; в гру скопійовано лише потрібне в live/sfx)
+experiments/03-christmas-town/study/sfx_dl/

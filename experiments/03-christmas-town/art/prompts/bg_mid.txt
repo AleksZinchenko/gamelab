@@ -1,0 +1,4 @@
+Use case: middle background parallax band for a side-scrolling platformer.
+Subject: a continuous row of half-timbered (fachwerk) town houses on the far side of a square, further away than the play area: gables of different heights, dark timber frames on pale blue-grey plaster, snow on the roofs and sills, small flat amber lit windows, a few wreaths. Medium-dark, slightly desaturated, less detail than the foreground, no outline.
+Composition: a single horizontal band filling the lower 65%; rooflines between 35% and 50% from the top; left and right edges match in height so it tiles; the house walls continue down to the bottom edge. Above the rooftops flat solid #FF00FF.
+Constraints: no street, no ground, no lamps, no people, no text.

@@ -1,0 +1,5 @@
+Use case: character anchor for a cut-out animation rig in a side-scrolling platformer.
+Image 2 shows the hero's design: follow it exactly (face, red knitted hat with pompom, red-white striped long scarf, blue coat with brass buttons, red mittens, dark trousers, brown boots).
+Subject: the hero, a cheerful 10-year-old kid, full body, facing right in a slight 3/4 side view, standing in a neutral rig pose: feet under the hips with a clear gap between the legs, arms hanging slightly away from the body with a clear gap between each arm and the torso, hands empty (no slingshot), scarf ends hanging down behind the back.
+Composition: one character centred, filling 85% of the canvas height, feet on a line at 93% height.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no text.

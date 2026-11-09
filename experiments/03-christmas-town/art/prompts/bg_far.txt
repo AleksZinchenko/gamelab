@@ -1,0 +1,4 @@
+Use case: far background parallax band for a side-scrolling platformer.
+Subject: the distant silhouette of an old European town on Christmas night: a low hill with a small castle, a church with a tall spire, many steep roofs and chimneys, a few tiny flat amber lit windows. Hazy and low contrast, mostly dark desaturated blue, simplified shapes, very little detail, no outline.
+Composition: a single horizontal band filling the lower 55% of the image; the skyline varies between 45% and 60% from the top; the left and right edges have the same height and density so the band tiles horizontally; the band continues to the bottom edge. Everything above the skyline is flat solid #FF00FF.
+Constraints: one band only, no sky, no moon, no stars, no people, no text.

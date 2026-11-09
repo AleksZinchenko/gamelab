@@ -1,0 +1,5 @@
+Use case: sheet of play-plane buildings for a side-scrolling platformer (the hero can jump on roofs and sills).
+Image 2 shows the house design to follow (timber pattern, roof, windows, proportions).
+Subject: 3 separate half-timbered (fachwerk) houses, each in strict front-on side view: (1) a two-storey bakery with a big shop window, an empty hanging sign board and a red-white striped awning; (2) a narrow tall three-storey house with a steep gable, a small wooden balcony and a window box; (3) a wide two-storey house with an arched wooden gate and a dormer window. Dark timber frames on white plaster, steep snowy roofs, chimneys, flat amber lit windows, wooden shutters, fir garlands and wreaths. Awning, balcony, sills and roof edges are clear horizontal ledges.
+Composition: the three houses side by side, all standing on one ground line at 92% height, with wide empty gaps (at least 8% of the width) between them; each house complete inside the frame.
+Constraints: background flat solid #FF00FF; no ground strip, no street lamps, no people, no snow on the background, no text on the sign.

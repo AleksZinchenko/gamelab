@@ -1,0 +1,9 @@
+Game art style sheet for an ORIGINAL side-scrolling 2D platformer about Christmas Eve in a small snowy European town with half-timbered (fachwerk) houses. One sheet on a plain flat background, neatly arranged with space between elements, no text, no letters, no numbers, no logos, no labels.
+Contents:
+1) The hero: a cheerful kid about 10 years old in a red knitted hat with a pompom, a long striped scarf, a warm coat, mittens and boots, with a wooden slingshot. Shown three times: standing idle facing right, running, aiming the slingshot.
+2) Two villains from a gang that hates holidays, comical not scary: a skinny sneaky thief in a grey scarf and flat cap carrying a sack of stolen presents; a chubby grumpy bully in a grey coat holding a lump of coal.
+3) One two-storey half-timbered house facade: dark timber frame on white plaster, steep snowy roof, chimney, warm lit windows, a wreath on the door.
+4) A row of small collectible items: candy cane, gingerbread man, wrapped candy, glass Christmas bauble, golden star, small gift box with ribbon, pine cone (slingshot ammo), paper party firecracker with a spark.
+5) A strip of snowy cobblestone ground tiles and an old street lamp.
+6) A row of palette swatch squares along the bottom edge.
+STYLE: 16-bit era cozy pixel art. The hero is about 32 pixels tall, tiles 16x16, crisp hard-edged pixels magnified with nearest-neighbour. Rich warm palette of about 32 colours with hue-shifted ramps (shadows lean purple-blue, lights lean warm yellow), light ordered dithering only in the sky, selective coloured outlines (a darker local hue, not pure black). Christmas night: deep indigo background, warm amber window light.

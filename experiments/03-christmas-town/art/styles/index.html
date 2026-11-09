@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Сторінка порівняння арт-стилів для «Ялинки до світанку».
+     Відкривається просто як файл у браузері; клік по картинці — повний розмір у новій вкладці. -->
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ялинка до світанку — стилі</title>
+<style>
+  /* Темний фон, щоб нічні листи не «світились» на білому і порівнювати було чесно */
+  :root { --bg:#14161c; --card:#1e2129; --text:#e8e6e1; --muted:#9aa0ab; --accent:#d6283a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, sans-serif; padding:24px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:26px; }
+  .lead { color:var(--muted); margin:0 0 24px; max-width:900px; }
+  .grid { display:grid; gap:20px; grid-template-columns:repeat(auto-fit, minmax(min(100%, 620px), 1fr)); }
+  .card { background:var(--card); border-radius:12px; overflow:hidden; }
+  /* pixelated — щоб браузер не розмивав пікселі при масштабуванні */
+  .card img { display:block; width:100%; image-rendering:pixelated; cursor:zoom-in; }
+  .body { padding:14px 18px 18px; }
+  .tag { display:inline-block; background:var(--accent); color:#fff; font-weight:700; border-radius:6px;
+         padding:0 9px; margin-right:8px; }
+  h2 { margin:0 0 8px; font-size:19px; }
+  ul { margin:6px 0 0; padding-left:20px; }
+  li { margin:2px 0; }
+  .plus { color:#8fd18f; } .minus { color:#e6a06a; }
+  .rec { outline:2px solid #e8c45a; }
+  .rec h2::after { content:"  ← рекомендую"; color:#e8c45a; font-size:14px; font-weight:400; }
+</style>
+</head>
+<body>
+<h1>Ялинка до світанку — арт-стилі</h1>
+<p class="lead">На всіх листах той самий зміст: герой (стоїть, біжить, цілиться), два злодії, фахверковий будинок,
+предмети, бруківка й ліхтар, палітра. Відрізняється лише стиль. Клік по картинці відкриває її в повному розмірі.</p>
+
+<div class="grid">
+  <div class="card">
+    <a href="a_8bit.png" target="_blank"><img src="a_8bit.png" alt="Стиль A"></a>
+    <div class="body"><h2><span class="tag">A</span>8-біт</h2>
+      <ul>
+        <li class="plus">Найчіткіше читається, найменше роботи: мало кольорів і мало кадрів анімації</li>
+        <li class="plus">Найлегше привести до чесної піксельної сітки</li>
+        <li class="minus">Найменше атмосфери, виглядає «як ще одна ретро-гра»</li>
+      </ul></div>
+  </div>
+  <div class="card">
+    <a href="b_16bit.png" target="_blank"><img src="b_16bit.png" alt="Стиль B"></a>
+    <div class="body"><h2><span class="tag">B</span>16-біт затишний</h2>
+      <ul>
+        <li class="plus">Найгарніший будиночок: бурульки, дим, вазони, теплі вікна</li>
+        <li class="plus">Виразні персонажі, багата тепла палітра</li>
+        <li class="minus">Багато кольорів, тому важче тримати всі асети однаковими</li>
+      </ul></div>
+  </div>
+  <div class="card rec">
+    <a href="c_hdpixel.png" target="_blank"><img src="c_hdpixel.png" alt="Стиль C"></a>
+    <div class="body"><h2><span class="tag">C</span>Сучасний «hi-bit»</h2>
+      <ul>
+        <li class="plus">Найбільше атмосфери: нічна синява, плями світла з вікон і від ліхтаря</li>
+        <li class="plus">Світло, сніг і сяйво в грі робить код, тож вогні справді мерехтітимуть і гаснутимуть (гасильники!)</li>
+        <li class="minus">Найбільше деталей, тому довше генерувати й чистити</li>
+      </ul></div>
+  </div>
+  <div class="card">
+    <a href="d_4tone.png" target="_blank"><img src="d_4tone.png" alt="Стиль D"></a>
+    <div class="body"><h2><span class="tag">D</span>4 сині + червоний</h2>
+      <ul>
+        <li class="plus">Найоригінальніший і найвпізнаваніший</li>
+        <li class="plus">Ігрова ідея: червоне = «те, що треба врятувати». Предмети одразу видно</li>
+        <li class="minus">За 20 хвилин гри може набриднути; важко передати ніч і теплі вогні</li>
+      </ul></div>
+  </div>
+  <div class="card">
+    <a href="e_card.png" target="_blank"><img src="e_card.png" alt="Стиль E"></a>
+    <div class="body"><h2><span class="tag">E</span>Вінтажна листівка</h2>
+      <ul>
+        <li class="plus">Найтепліший і найказковіший, кремова «паперова» гама</li>
+        <li class="plus">Герой у зеленому, тож червоний лишається для свята</li>
+        <li class="minus">Сутінки, а не ніч: менше «магії вогників»</li>
+      </ul></div>
+  </div>
+</div>
+</body>
+</html>

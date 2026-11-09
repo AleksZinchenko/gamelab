@@ -1,0 +1,6 @@
+[
+ {"name": "hero_parts_sheet", "prompt": "art/prompts/hero_parts_sheet.txt", "ref": ["art/gen/hero_anchor.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "thief_anchor", "prompt": "art/prompts/thief_anchor.txt", "ref": ["study/crops/thief_ref.png"], "size": "1024x1536", "alpha": "key", "key": "ff00ff"},
+ {"name": "bully_anchor", "prompt": "art/prompts/bully_anchor.txt", "ref": ["study/crops/bully_ref.png"], "size": "1024x1536", "alpha": "key", "key": "ff00ff"},
+ {"name": "items_sheet", "prompt": "art/prompts/items_sheet.txt", "size": "1024x1024", "alpha": "key", "key": "ff00ff"}
+]

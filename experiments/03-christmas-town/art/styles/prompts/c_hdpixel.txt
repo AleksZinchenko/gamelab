@@ -1,0 +1,1 @@
+STYLE: modern high-detail indie pixel art ("hi-bit"). The hero is about 48 pixels tall, detailed pixel sprites with crisp pixel edges, combined with modern lighting: warm soft light pools from windows and the street lamp spilling onto the snow, gentle bloom only on light sources, cool blue moonlit shadows, a few falling snowflakes. Cinematic cozy night mood, dark blue background.

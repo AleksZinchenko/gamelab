@@ -1,0 +1,4 @@
+[
+ {"name": "thief_parts_sheet", "prompt": "art/prompts/thief_parts_sheet.txt", "ref": ["art/gen/thief_anchor.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "bully_parts_sheet", "prompt": "art/prompts/bully_parts_sheet.txt", "ref": ["art/gen/bully_anchor.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"}
+]

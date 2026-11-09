@@ -1,0 +1,5 @@
+Use case: character anchor for a cut-out animation rig in a side-scrolling platformer (an enemy).
+Image 2 shows the character's design: follow it (grey flat cap, black eye mask, grey scarf, dark grey coat, dark trousers, brown shoes, sly grin).
+Subject: a skinny sneaky thief from a gang that hates Christmas, comical not scary, about the same height as the hero kid's head-to-toe plus one head, full body, facing right in a slight 3/4 side view, standing in a neutral rig pose: feet under the hips with a clear gap between the legs, arms hanging slightly away from the body with a clear gap between each arm and the torso, hands empty, no sack.
+Composition: one character centred, filling 85% of the canvas height, feet on a line at 93% height.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no text.

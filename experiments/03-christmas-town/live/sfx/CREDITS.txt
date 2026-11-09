@@ -1,0 +1,5 @@
+Звуки: Kenney (kenney.nl) — Impact Sounds, Interface Sounds, UI Audio. Ліцензія CC0.
+  Дзеркала: github.com/Calinou/kenney-interface-sounds, github.com/Calinou/kenney-ui-audio, github.com/Boyquotes/kenney-impact-sounds-for-godot
+Музика: Kevin MacLeod (incompetech.com), Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/
+  меню — «Jingle Bells (Calm)»; гра — «Deck the Halls B»; фінал — «We Wish You a Merry Christmas».
+  Файли з Wikimedia Commons (пошук «Kevin MacLeod christmas»).
