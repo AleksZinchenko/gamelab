@@ -9,6 +9,42 @@
   const SNOW = [0.86, 0.9, 1.0], WARM = [1.0, 0.68, 0.32];
   const rnd = L.rnd, SS = L.SS;
 
+  // ---------------- читабельність платформ ----------------
+  // Одна «мова» для гравця: де лежить сніжна смуга з бурульками — туди можна стати. Малюється кодом по лініях SIM.SURF,
+  // тож кожна платформа (дах, навіс, вазон, ящики, карниз) позначена однаково, а все інше — ні.
+  const CAP = [0.93, 0.93, 0.99], CAP_SH = [0.55, 0.61, 0.86], ICE = [0.74, 0.86, 1.0];
+  const seedOf = (id) => { let h = 0; for (const c of id) h = h * 31 + c.charCodeAt(0); return h % 997; };
+  function caps(X, Y, onScreen) {
+    for (const s of SIM.SURF) { if (s.id === 'ground') continue; const p = s.pts, sd = seedOf(s.id);
+      for (let i = 0; i < p.length - 1; i++) { const [x0, y0] = p[i], [x1, y1] = p[i + 1]; if (!onScreen((x0 + x1) / 2, Math.abs(x1 - x0) + 100)) continue;
+        const len = Math.hypot(x1 - x0, y1 - y0), a = Math.atan2(y1 - y0, x1 - x0), sx = Math.round(x0 + X(1)), sy = Math.round(y0 + Y(1));
+        // смуга: синя тінь знизу, біла шапка зверху (верх — рівно під ногами героя); краї трохи звисають
+        L.solid(sx - 6, sy + 2, len + 12, 8, CAP_SH, a, 6, -2);
+        L.solid(sx - 8, sy - 3, len + 16, 8, CAP, a, 8, 3);
+        if (s.roof || Math.abs(y1 - y0) > 0.2 * Math.abs(x1 - x0)) continue;         // на дахах (і скісних) бурульок нема
+        // горбики снігу й бурульки — однакові щокадру (rnd від номера платформи), різної довжини
+        for (let k = 6; k < len - 4; k += 22) { const r = rnd(sd, k), x = sx + Math.round(k / 2) * 2, y = sy + (y1 - y0) * k / len;
+          L.solid(x - 4, Math.round(y) - 5, 10, 4, CAP);
+          if (r > 0.3) { const h = 6 + Math.round(r * 14 / 2) * 2; L.solid(x, Math.round(y) + 8, 4, h, ICE); L.solid(x + 1, Math.round(y) + 8 + h, 2, 4, ICE); } } } }
+  }
+  // Іскри на краях, до яких герой дістане стрибком прямо зараз (стоїть на опорі; край вище, але не вище ~360 px, поруч).
+  const REACH = 370;
+  function glints(ST, t, X, Y, onScreen) {
+    if (!ST.ground || ST.faint >= 0 || ST.exit) return;
+    for (const s of SIM.SURF) { if (s.id === 'ground' || s.id === ST.ground) continue; const p = s.pts, sd = seedOf(s.id);
+      for (let i = 0; i < p.length - 1; i++) { const [x0, y0] = p[i], [x1, y1] = p[i + 1]; if (!onScreen((x0 + x1) / 2, Math.abs(x1 - x0))) continue;
+        const cx = Math.max(x0, Math.min(x1, ST.x)), cy = y0 + (y1 - y0) * (cx - x0) / (x1 - x0 || 1), dy = ST.y - cy, dx = Math.abs(cx - ST.x);
+        const k = SS(30, 70, dy) * (1 - SS(REACH - 40, REACH, dy)) * (1 - SS(260, 430, dx)); if (k <= 0.01) continue;
+        const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(2, Math.round(len / 55));
+        // постійний легкий блиск + час від часу спалах (кожна іскра у своєму ритмі)
+        for (let j = 0; j < n; j++) { const u = (j + 0.5) / n, tw = 0.3 + 0.7 * Math.max(0, Math.sin(t * 2.6 + j * 2.3 + sd)) ** 3;
+          const x = x0 + (x1 - x0) * u + X(1), y = y0 + (y1 - y0) * u + Y(1) - 2;
+          // золотий хрестик звичайним шаром: «світле» додавання на білому снігу не видно, а жовте — видно
+          const s = Math.round(4 + 6 * tw) * 2, xx = Math.round(x / 2) * 2, yy = Math.round((y - 6) / 2) * 2, a = Math.min(1, 1.2 * k * tw);
+          L.solid(xx - s / 2, yy - 1, s, 2, [1, 0.78, 0.25], 0, 0, 0, a); L.solid(xx - 1, yy - s / 2, 2, s, [1, 0.78, 0.25], 0, 0, 0, a);
+          L.solid(xx - 2, yy - 2, 4, 4, [1, 1, 0.9], 0, 0, 0, a); L.glow(x, y - 6, 34, [1, 0.85, 0.5], 0.2 * k, 3); } } }
+  }
+
   // Вікна будинків (центри в частках текстури) — для теплого світла, що мерехтить. Виміряно з сітки.
   const WIN = {
     house_bakery: [[0.27, 0.42], [0.59, 0.42], [0.36, 0.84], [0.17, 0.78], [0.3, 0.78]],
@@ -64,6 +100,7 @@
     // реквізит
     for (const p of LV.PROPS) { if (!onScreen(p.x)) continue; const w = L.hsz(p.tex, p.h);
       L.sprite(p.tex, Math.round(p.x - w / 2 + X(1)), Math.round(GY - p.h + 6 + Y(1)), { h: p.h }); }
+    caps(X, Y, onScreen);                                                    // сніжні краї платформ — поверх будинків і реквізиту
     // земля: смуга бруківки під снігом, повторюється
     { const g = A('ground'), k = 0.8, gw = g.w * k, walk = (g.walk || 14) * k, x0 = Math.floor(camX / gw) * gw - gw;
       for (let x = x0; x < camX + W + gw; x += gw - 1) L.sprite('ground', Math.round(x + X(1)), Math.round(GY - walk + Y(1)), { w: gw, h: g.h * k });
@@ -92,6 +129,7 @@
         L.glow(lx + X(1), GY + Y(1) + 10, 220, WARM, 0.18 * lit, 2.4); }
       else L.glow(lpx, lpy, 30, [0.5, 0.6, 0.9], 0.15, 3); });
     if (LV.HUB) PLAZA.light(ST, GT, t, X, Y);
+    glints(ST, t, X, Y, onScreen);                                           // іскри на краях, до яких зараз дістанеш
 
     // ===================== сніг: два шари пластівців, вітер з симуляції =====================
     if (!L.NOFX) for (let i = 0; i < 150; i++) { const near = i % 3 === 0, sp = near ? 120 + 40 * rnd(i, 1) : 55 + 30 * rnd(i, 1);

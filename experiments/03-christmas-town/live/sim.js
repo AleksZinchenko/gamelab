@@ -20,7 +20,8 @@
   LV.HOUSES.forEach((h, hi) => { const [tw, th] = LV.TEX[h.tex], k = h.k || LV.HK;          // k — свій масштаб будинку (ратуша менша)
     const X = (lx) => h.x + (h.flip ? tw - lx : lx) * k, Y = (ly) => GY - (th - ly) * k;
     LV.LEDGES[h.tex].forEach(([x0, y0, x1, y1], li) => { const a = [X(x0), Y(y0)], b = [X(x1), Y(y1)];
-      SURF.push({ id: 'h' + hi + '_' + li, pts: a[0] < b[0] ? [a, b] : [b, a] }); }); });
+      // roof: верхня чверть будинку — це дах (під краєм не повітря, а сам дах: бурульок там не малюємо)
+      SURF.push({ id: 'h' + hi + '_' + li, pts: a[0] < b[0] ? [a, b] : [b, a], roof: Math.min(y0, y1) < th * 0.25 }); }); });
   LV.PROPS.forEach((p, pi) => { if (p.top === undefined) return; const [tw, th] = LV.TEX[p.tex], w = p.h * tw / th, y = GY - p.h * (1 - p.top);
     SURF.push({ id: 'p' + pi, pts: [[p.x - w * 0.42, y], [p.x + w * 0.42, y]] }); });
   (LV.SURFX || []).forEach(([x0, y0, x1, y1], i) => SURF.push({ id: 'x' + i, pts: [[x0, y0], [x1, y1]] }));   // додаткові платформи рівня

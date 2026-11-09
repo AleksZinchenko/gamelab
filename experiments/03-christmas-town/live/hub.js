@@ -30,7 +30,7 @@
   // Брами — виходи з площі на рівні. to: куди веде (null — ще зачинено). post: false — табличка над дверима, без стовпа.
   const GATES = [
     { x: 190, to: 'street', name: 'Пекарська вулиця', dir: -1 },
-    { x: TH.x + TH.w / 2, to: null, name: 'Ратушна вежа', post: false },
+    { x: TH.x + TH.w / 2, to: null, name: 'Ратушна вежа' },
     { x: 3070, to: null, name: 'Дахи й димарі', dir: 1 },
     { x: 3790, to: null, name: 'Замерзла річка', dir: 1 },
   ];
