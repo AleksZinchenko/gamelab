@@ -11,7 +11,7 @@
       ...(PROG.any() ? [['reset', 'Зняти прикраси (нова гра)']] : [])],
     // пауза на площі коротша; на вулиці можна повернутись на площу (крадене тоді лишається у злодюжок)
     pause: () => LV.HUB ? [['resume', 'Продовжити'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']]
-      : [['resume', 'Продовжити'], ['restart', 'Почати вулицю знову'], ['tohub', 'Повернутись на площу'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']],
+      : [['resume', 'Продовжити'], ['restart', 'Почати рівень знову'], ['tohub', 'Повернутись на площу'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['menu', 'Головне меню']],
     controls: () => [['back', 'Назад']],
     done: () => [['tohub', 'На площу з добром'], ['again', 'Пройти ще раз'], ['menu', 'Головне меню']],
     final: () => [['walk', 'Гуляти площею'], ['menu', 'Головне меню']],
@@ -83,10 +83,13 @@
     if (ST.bagQ.length) counter('bag', 'sack', '×' + ST.bagQ.length, 30, 28, bumpOf(ST, GT, ['hang']));
     // справа — що вже на ялинці: подарунки, зірка, прикраси (порожні слоти тьмяні — видно, чого бракує)
     const T = ST.tree, on = (v) => v !== -1 && GT >= v;
-    const gx = W - 40 - 3 * 74; L.rrect(gx - 16, 24, 3 * 74 + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, 3 * 74 + 26, 76, 0);
-    [['gift_red', T.gift[0]], ['gift_green', T.gift[1]], ['star', T.star]].forEach(([n, v], i) => icon(n, gx + 32 + i * 74, 62, 54, on(v) ? 1 : 0.22));
-    const ox = W - 40 - 5 * 46; L.rrect(ox - 14, 108, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns', ox - 14, 108, 5 * 46 + 22, 56, 0);
-    T.orn.forEach((v, i) => icon(ORN_N[(LEVELS.street.ORNAMENTS[i] || [0, 0, 0])[2]], ox + 18 + i * 46, 136, 40, on(v) ? 1 : 0.22));
+    // подарунки всіх рівнів + зірка; прикраси — рядок на кожен рівень (вулиця, дахи)
+    const gs = [...T.gift.map((v, i) => [i % 2 ? 'gift_green' : 'gift_red', v]), ['star', T.star]], gw = gs.length * 62;
+    const gx = W - 40 - gw; L.rrect(gx - 16, 24, gw + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, gw + 26, 76, 0);
+    gs.forEach(([n, v], i) => icon(n, gx + 28 + i * 62, 62, 48, on(v) ? 1 : 0.22));
+    for (let r = 0; r * 5 < T.orn.length; r++) { const ox = W - 40 - 5 * 46, oy = 108 + r * 62;
+      L.rrect(ox - 14, oy, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns' + r, ox - 14, oy, 5 * 46 + 22, 56, 0);
+      for (let i = r * 5; i < Math.min(T.orn.length, r * 5 + 5); i++) icon(ORN_N[LV.TREE.ornKind(i)], ox + 18 + (i - r * 5) * 46, oy + 28, 40, on(T.orn[i]) ? 1 : 0.22); }
     const ht = ST.t; if (ht < 7 && UI.mode === 'play') { const a = SS(0, 0.5, ht) * (1 - SS(6, 7, ht)), s = LV.HINT, w = L.labelW('hint', s, { size: 28 }) + 40;
       L.rrect(W / 2 - w / 2, H - 92, w, 54, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.75 * a); L.uiBox('hint', W / 2 - w / 2, H - 92, w, 54, 4);
       L.label('hint', s, W / 2, H - 65, { size: 28, col: CREAM, out: INK, al: 0.5, a }); }
@@ -101,8 +104,9 @@
     x += counter('cn', 'cone', String(ST.cones), x, 28, bumpOf(ST, GT, ['shoot', 'ammo'])) + 14;
     counter('cr', 'cracker', String(ST.crackers), x, 28, bumpOf(ST, GT, ['toss', 'ammo']));
     // справа: 3 подарунки і 5 прикрас — порожні слоти видно (чого ще бракує)
-    const gx = W - 40 - 3 * 74; L.rrect(gx - 16, 24, 3 * 74 + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, 3 * 74 + 26, 76, 0);
-    ['gift_red', 'gift_green', 'star'].forEach((n, i) => { const g = ST.gifts[i], a = g >= 0 ? SS(0.5, 0.8, GT - g) : 0;
+    const GF = LV.GIFTS || ['gift_red', 'gift_green', 'star'], ng = GF.length;                     // скільки подарунків на рівні
+    const gx = W - 40 - ng * 74; L.rrect(gx - 16, 24, ng * 74 + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, ng * 74 + 26, 76, 0);
+    GF.forEach((n, i) => { const g = ST.gifts[i], a = g >= 0 ? SS(0.5, 0.8, GT - g) : 0;
       icon(n, gx + 32 + i * 74, 62, 54 * (1 + 0.3 * Math.max(0, 1 - Math.abs(GT - g - 0.8) / 0.2) * (g >= 0 ? 1 : 0)), 0.22 + 0.78 * a); });
     const ox = W - 40 - 5 * 46; L.rrect(ox - 14, 108, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns', ox - 14, 108, 5 * 46 + 22, 56, 0);
     LV.ORNAMENTS.forEach(([, , k], i) => icon(['orn_red', 'orn_gold', 'orn_blue'][k], ox + 18 + i * 46, 136, 40, ST.orn[i] >= 0 ? 1 : 0.22));
@@ -175,10 +179,10 @@
   function done(ST, GT, t) {
     const k = SS(0, 0.4, t - UI.t0); L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, 0.55 * k);
     const w = 980, h = 470, x = W / 2 - w / 2, y = 140; panel(x, y, w, h, k); L.uiBox('done', x, y, w, h, 8);
-    L.label('dt', 'Вулицю врятовано!', W / 2, y + 74, { size: 76, col: '#ffe7b0', out: '#5a1018', al: 0.5, a: k });
+    L.label('dt', LV.TITLE || 'Вулицю врятовано!', W / 2, y + 74, { size: 76, col: '#ffe7b0', out: '#5a1018', al: 0.5, a: k });
     const tot = LV.SWEETS.length, c = (v, d) => Math.round(v * SS(d, d + 0.8, t - UI.t0));     // числа «набігають»
     const rows = [['it_candy', 'Солодощі', c(ST.got.filter((g) => g >= 0).length, 0.4) + ' / ' + tot], ['orn_gold', 'Прикраси', c(ST.orn.filter((g) => g >= 0).length, 1.0) + ' / 5'],
-      ['gift_red', 'Подарунки', c(ST.gifts.filter((g) => g >= 0).length, 1.6) + ' / 3']];
+      ['gift_red', 'Подарунки', c(ST.gifts.filter((g) => g >= 0).length, 1.6) + ' / ' + LV.THIEVES.length]];
     rows.forEach(([n, a, b], i) => { const yy = y + 190 + i * 88; icon(n, x + 150, yy, 62, k);
       L.label('dr' + i, a, x + 220, yy, { size: 44, col: CREAM, out: INK, a: k }); L.label('dv' + i, b, x + w - 120, yy, { size: 48, col: GOLD, out: INK, al: 1, a: k }); });
     buttons(ITEMS.done(), W / 2, y + h + 40, t);

@@ -3,12 +3,14 @@
 // SIM.at(t) — атракт-демо (програє записаний сценарій натискань), SIM.spawn + SIM.step — справжня гра в браузері.
 (function (root) {
   const LV = root.LEVEL || require('./level.js'), ACT = root.ACT || require('./actors.js');
-  if (!root.LEVELS.hub && typeof require !== 'undefined') require('./hub.js');   // у node площу підтягуємо самі (у браузері — index.html)
+  if (!root.LEVELS.hub && typeof require !== 'undefined') require('./hub.js');
+  if (!root.LEVELS.roofs && typeof require !== 'undefined') require('./roofs.js');   // у node площу підтягуємо самі (у браузері — index.html)
   const DT = 1 / 120, L = 16.0;                  // крок симуляції і довжина циклу демо (с)
   const VIEW = { W: 1920, H: 1080 }, GY = LV.GY;
   // «Відчуття» руху (px, с). JUMP дає стрибок ~360 px (2.2 зросту героя) — щоб діставати навіси й підвіконня.
   // COYOTE — «час койота»: ще 0.1 с після краю можна стрибнути; BUFFER — натиснув трохи раніше приземлення — спрацює.
-  const K = { G: 2700, GF: 3300, MAXF: 1600, RUN: 430, ACC_G: 3200, ACC_A: 2100, JUMP: 1390, COYOTE: 0.10, BUFFER: 0.12, CUT: 480, APEX: 170 };
+  const K = { G: 2700, GF: 3300, MAXF: 1600, RUN: 430, ACC_G: 3200, ACC_A: 2100, JUMP: 1390, COYOTE: 0.10, BUFFER: 0.12, CUT: 480, APEX: 170,
+    CLIMB: 300, ACC_SLIP: 700, SLIDE: 1500, MAXSLIDE: 720 };   // драбина (px/с), ковзкий скат: слабке гальмування, сповзання
   const HERO_H = 160;                            // зріст героя на екрані (px)
   const HINT = 'стрілки / WASD — біг, Пробіл — стрибок, X або клік — рогатка, C — хлопавка, Esc — пауза';
 
@@ -18,11 +20,11 @@
   const SURF = [];
   function buildSurf() { SURF.length = 0; SURF.push({ id: 'ground', pts: [[-600, GY], [LV.LEN + 600, GY]] });
   LV.HOUSES.forEach((h, hi) => { const [tw, th] = LV.TEX[h.tex], k = h.k || LV.HK;          // k — свій масштаб будинку (ратуша менша)
-    const X = (lx) => h.x + (h.flip ? tw - lx : lx) * k, Y = (ly) => GY - (th - ly) * k;
+    const X = (lx) => h.x + (h.flip ? tw - lx : lx) * k, Y = (ly) => (h.base || GY) - (th - ly) * k;
     LV.LEDGES[h.tex].forEach(([x0, y0, x1, y1], li) => { const a = [X(x0), Y(y0)], b = [X(x1), Y(y1)];
       // roof: верхня чверть будинку — це дах (під краєм не повітря, а сам дах: бурульок там не малюємо)
-      SURF.push({ id: 'h' + hi + '_' + li, pts: a[0] < b[0] ? [a, b] : [b, a], roof: Math.min(y0, y1) < th * 0.25 }); }); });
-  LV.PROPS.forEach((p, pi) => { if (p.top === undefined) return; const [tw, th] = LV.TEX[p.tex], w = p.h * tw / th, y = GY - p.h * (1 - p.top);
+      SURF.push({ id: 'h' + hi + '_' + li, pts: a[0] < b[0] ? [a, b] : [b, a], roof: !!h.base || Math.min(y0, y1) < th * 0.25 }); }); });
+  LV.PROPS.forEach((p, pi) => { if (p.top === undefined) return; const [tw, th] = LV.TEX[p.tex], w = p.h * tw / th, y = (p.y || GY) - p.h * (1 - p.top);
     SURF.push({ id: 'p' + pi, pts: [[p.x - w * 0.42, y], [p.x + w * 0.42, y]] }); });
   (LV.SURFX || []).forEach(([x0, y0, x1, y1], i) => SURF.push({ id: 'x' + i, pts: [[x0, y0], [x1, y1]] }));   // додаткові платформи рівня
   }
@@ -35,10 +37,16 @@
   const surfAt = (x, y, tol) => { let best = null;
     for (const s of SURF) { const sy = yOn(s, x); if (sy !== null && Math.abs(sy - y) <= tol && (!best || sy < best.y)) best = { s, y: sy }; }
     return best; };
+  const byId = (id) => SURF.find((s) => s.id === id);
+  // нахил платформи під x: dy/dx (> 0 — униз праворуч). Для ковзких скатів.
+  const slopeAt = (s, x) => { const p = s.pts; for (let i = 0; i < p.length - 1; i++) if (x >= p[i][0] && x <= p[i + 1][0])
+    return (p[i + 1][1] - p[i][1]) / (p[i + 1][0] - p[i][0] || 1); return 0; };
   const groundBelow = (x, y) => { let best = null; for (const s of SURF) { const sy = yOn(s, x); if (sy !== null && sy >= y - 4 && (best === null || sy < best)) best = sy; } return best; };
   // ліхтар, у який влучила шишка (скло ліхтаря — коло біля верхівки)
   const lampAt = (x, y) => LV.LAMPS.findIndex((lx) => Math.hypot(x - lx, y - (GY - LV.LAMP_H + 60)) < 40);
-  const W = { groundBelow, lampAt };
+  // y платформи з таким id під x (по ній сповзають сніжні пласти); null — з'їхав за край
+  const yAt = (id, x) => { const s = SURF.find((q) => q.id === id); return s ? yOn(s, x) : null; };
+  const W = { groundBelow, lampAt, yAt };
 
   // Рука з рогаткою — ЄДИНЕ джерело пострілу: і симуляція, і малюнок героя беруть цю точку (тоді шишка вилітає з руки).
   // Плече ближньої руки (draw.js малює руку саме звідси) і довжина руки до кисті — постріл вилітає з кисті.
@@ -59,8 +67,9 @@
     const S = Object.assign({ t: 0, steps: 0, wt0: 0, vj: false,
       x: LV.START, y: GY, vx: 0, vy: 0, ground: 'ground', face: 1, dist: 0, coyote: 0, buf: 0, prevJump: 0, prevAct: 0, prevAlt: 0, cut: false,
       landT: -9, landV: 0, jumpT: -9, hurtT: -9, shootT: -9, tossT: -9, inv: 0, hearts: 3, faint: -1, done: -1, sw: 0, combo: 0, comboT: -9,
-      cones: 20, crackers: 3, cp: LV.START, scarfTh: 0, scarfOm: 0, cam: 0, camV: 0, camY: 0, camYV: 0, ev: [],
-      lit: LV.LAMPS.map(() => (LV.HUB ? -100 : -1)), la: LV.LAMPS.map(() => [0, 0]), aim: null, prevUp: 0, exit: null }, ACT.init());   // на площі ліхтарі вже горять
+      cones: 20, crackers: 3, cp: LV.START, cpY: GY, climb: 0, scarfTh: 0, scarfOm: 0, cam: 0, camV: 0, camY: 0, camYV: 0, ev: [],
+      lit: LV.LAMPS.map(() => (LV.HUB ? -100 : -1)), la: LV.LAMPS.map(() => [0, 0]), aim: null, prevUp: 0, exit: null,   // на площі ліхтарі вже горять
+      ch: (LV.CHIMNEYS || []).map(() => -1) }, ACT.init());                                                     // димарі-чекпоінти (дахи)
     if (o && o.x !== undefined) Object.assign(S, { x: o.x, cp: o.x, face: o.face || 1 });                    // звідки заходимо (напр. з брами вулиці)
     if (LV.onInit) LV.onInit(S, o);
     return S;
@@ -74,8 +83,9 @@
     // ---- ліхтарі: пружинний маятник (шишка або вибух розгойдує) ----
     for (const l of S.la) { l[1] += (-60 * l[0] - 2.2 * l[1]) * DT; l[0] += l[1] * DT; }
     // ---- непритомність після втрати всіх рукавичок → відродження біля останнього запаленого ліхтаря ----
-    if (S.faint >= 0) { if (t - S.faint > 1.6) { Object.assign(S, { x: S.cp, y: GY, vx: 0, vy: 0, ground: 'ground', hearts: 3, faint: -1, inv: 1.5 });
-        S.ev.push({ k: 'revive', t, x: S.x, y: GY }); } inp = {}; }
+    if (S.faint >= 0) { if (t - S.faint > 1.6) { const g = surfAt(S.cp, S.cpY, 30);
+        Object.assign(S, { x: S.cp, y: g ? g.y : GY, vx: 0, vy: 0, ground: g ? g.s.id : 'ground', climb: 0, hearts: 3, faint: -1, inv: 1.5 });
+        S.ev.push({ k: 'revive', t, x: S.x, y: S.y }); } inp = {}; }
     if (S.done >= 0) inp = { right: S.x < LV.END + 260 ? 1 : 0 };         // фініш: герой сам добігає до ліхтаря
     if (S.exit) inp = {};                                                  // увійшов у браму — чекаємо переходу
     S.inv = Math.max(0, S.inv - DT);
@@ -90,11 +100,33 @@
     if (LV.GATES && upEdge && S.ground && S.faint < 0) { const g = LV.GATES.find((q) => Math.abs(S.x - q.x) < 110);
       if (g) { S.buf = 0; if (g.to) { S.exit = g.to; S.vx = 0; S.ev.push({ k: 'gate', t, x: S.x, y: S.y, to: g.to }); }
         else S.ev.push({ k: 'locked', t, x: g.x, y: S.y - 200 }); } }
+    // ---- драбини ----
+    const vert = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+    if (!S.climb && vert && S.faint < 0 && LV.LADDERS) { const li = LV.LADDERS.findIndex((l) => Math.abs(S.x - l.x) < 34 && S.y > l.top - 4 && S.y < l.bot + 4
+        && (vert < 0 ? S.y > l.top + 6 : S.y < l.bot - 6));
+      if (li >= 0) { S.climb = li + 1; S.ground = null; S.vx = 0; S.vy = 0; S.buf = 0; S.ev.push({ k: 'grab', t, x: S.x, y: S.y }); } }
+    if (S.climb) { const l = LV.LADDERS[S.climb - 1], py0 = S.y;
+      S.x += (l.x - S.x) * Math.min(1, 14 * DT); S.y += vert * K.CLIMB * DT; S.vx = 0; S.vy = 0; S.coyote = 0;
+      if (Math.floor(py0 / 44) !== Math.floor(S.y / 44)) S.ev.push({ k: 'rung', t, x: S.x, y: S.y });
+      const end = S.y <= l.top ? l.top : S.y >= l.bot ? l.bot : null;
+      if (end !== null) { const g = surfAt(l.x, end, 30); S.y = g ? g.y : end; S.climb = 0; S.ground = g ? g.s.id : null; }
+      if (inp.jump && jumpEdge) { S.climb = 0; S.vy = -K.JUMP * 0.75; S.vx = dir * K.RUN; S.jumpT = t; S.cut = true; S.ev.push({ k: 'jump', t, x: S.x, y: S.y }); }
+      S.buf = 0;
+    }
     // ---- по горизонталі: розгін/гальмування (у повітрі керування слабше) ----
-    const acc = S.ground ? K.ACC_G : K.ACC_A, target = dir * K.RUN;
-    S.vx = S.vx < target ? Math.min(target, S.vx + acc * DT) : Math.max(target, S.vx - acc * DT);
+    // ковзкі скати (рівень дахів): на крутому (|нахил| > 1.2) не встоїш — з'їжджаєш; на помірному — сповзаєш, гальмуєш погано
+    const gs = S.ground && LV.SLIP ? byId(S.ground) : null, m = gs ? slopeAt(gs, S.x) : 0, slip = Math.abs(m) > 0.35, steep = Math.abs(m) > 1.2;
+    // біжиш угору помірним скатом — повільніше, і сповзання слабшає (інакше вибігти неможливо); крутий — лише з'їжджаєш
+    const upHill = slip && !steep && dir === -Math.sign(m);
+    const acc = S.ground ? (slip ? (upHill ? K.ACC_G : K.ACC_SLIP) : K.ACC_G) : K.ACC_A, target = steep ? S.vx : dir * K.RUN * (upHill ? 0.7 : 1);
+    if (!S.climb) S.vx = S.vx < target ? Math.min(target, S.vx + acc * DT) : Math.max(target, S.vx - acc * DT);
+    if (slip) { S.vx += Math.sign(m) * (steep ? K.SLIDE * 1.6 : K.SLIDE * Math.abs(m) * (upHill ? 0.25 : 1)) * DT; S.vx = Math.max(-K.MAXSLIDE, Math.min(K.MAXSLIDE, S.vx));
+      if (Math.floor(t * 12) !== Math.floor((t - DT) * 12)) S.ev.push({ k: 'slide', t, x: S.x, y: S.y, d: Math.sign(m) }); }
+    // вітер у проміжках між дахами: зносить у польоті (сніжинки там летять убік — попередження)
+    if (!S.ground && !S.climb && LV.WIND) for (const w of LV.WIND) if (S.x > w.x0 && S.x < w.x1) S.vx += w.f * (0.7 + 0.3 * Math.sin(t * 1.7)) * DT;
     const py = S.y;
-    if (S.ground) {
+    if (S.climb) { /* на драбині рух уже пораховано */ }
+    else if (S.ground) {
       S.x += S.vx * DT;
       const g = surfAt(S.x, S.y, 24);
       if (g) { S.y = g.y; S.ground = g.s.id; S.coyote = K.COYOTE; } else S.ground = null;          // зійшов з краю — падає
@@ -112,7 +144,7 @@
     }
     S.x = Math.max(LV.HUB ? 80 : 40, Math.min(LV.XMAX || LV.LEN + 300, S.x));
     // ---- стрибок (з буфером і «часом койота») ----
-    if (S.buf > 0 && (S.ground || S.coyote > 0) && S.faint < 0) { S.vy = -K.JUMP; S.ground = null; S.coyote = 0; S.buf = 0; S.jumpT = t; S.cut = true;
+    if (S.buf > 0 && !S.climb && (S.ground || S.coyote > 0) && S.faint < 0) { S.vy = -K.JUMP; S.ground = null; S.coyote = 0; S.buf = 0; S.jumpT = t; S.cut = true;
       S.ev.push({ k: 'jump', t, x: S.x, y: S.y }); }
     // ---- рогатка: X / клік мишею; приціл — курсор (якщо мишу рухали) або вперед, «вгору» — вище ----
     const actEdge = (inp.act || inp.click) && !S.prevAct; S.prevAct = !!(inp.act || inp.press);
@@ -129,6 +161,8 @@
     if (LV.onStep) LV.onStep(S, t);                                      // правила рівня (площа: ялинка, фінал)
     // ---- ліхтарі-чекпоінти: пробіг повз — запалився ----
     LV.LAMPS.forEach((lx, i) => { if (S.lit[i] === -1 && S.x > lx - 30) { S.lit[i] = t; S.cp = lx; S.ev.push({ k: 'lamp', t, x: lx, y: GY - LV.LAMP_H + 60, i }); } });
+    (LV.CHIMNEYS || []).forEach((c, i) => { if (S.ch[i] === -1 && S.x > c.x - 40 && Math.abs(S.y - c.y) < 160) { S.ch[i] = t; S.cp = c.x; S.cpY = c.y;
+      S.ev.push({ k: 'chimney', t, x: c.x, y: c.y - 160, i }); } });
     if (S.done < 0 && S.x > LV.END) { S.done = t; S.ev.push({ k: 'done', t, x: S.x, y: S.y }); }
     // ---- шарф: пружина, що відстає від руху (follow-through — «наздоганяючий» рух) ----
     const ct = Math.max(-40, Math.min(40, S.vy * 0.03)) + (S.ground ? Math.max(-30, Math.min(30, -S.vx * 0.06)) : -S.vx * 0.03);
@@ -136,7 +170,8 @@
     // ---- камера: по x — з випередженням у бік погляду; по y — «прилипає» до платформи, на якій стоїш ----
     const ctg = Math.max(0, Math.min(LV.LEN - VIEW.W + 400, S.x + S.face * 220 - VIEW.W / 2));
     S.camV += (30 * (ctg - S.cam) - 11 * S.camV) * DT; S.cam += S.camV * DT;
-    let cy = S.camY; if (S.ground || S.y - S.camY > 1000 || S.y - S.camY < 330) cy = Math.min(0, S.y - 820);
+    // CAMY — на якій висоті екрана тримати героя (вулиця — 820, біля низу; дахи — вище, щоб бачити, що внизу)
+    const cyo = LV.CAMY || 820; let cy = S.camY; if (S.ground || S.climb || S.y - S.camY > 1000 || S.y - S.camY < 330) cy = Math.min(0, S.y - cyo);
     S.camYV += (22 * (cy - S.camY) - 9.4 * S.camYV) * DT; S.camY += S.camYV * DT;
     if (S.ev.length > 64) S.ev.splice(0, S.ev.length - 64);
     S.t = t; S.steps++;
@@ -156,6 +191,6 @@
     LV.SWEETS.forEach(([x, y], i) => { if (groundBelow(x, y) === null) out.push('sweet ' + i + ' has nothing below'); });
     return out; };
 
-  root.SIM = { DT, L, K, VIEW, HINT, HERO_H, SURF, LV, use, yOn, groundBelow, windAt, hand, shoulder, ARM_LEN, create, spawn, respawn, outOfPlay, step, at, scriptInput, demoCheck, selfCheck };
+  root.SIM = { DT, L, K, VIEW, HINT, HERO_H, SURF, LV, use, yOn, slopeAt, byId, groundBelow, windAt, hand, shoulder, ARM_LEN, create, spawn, respawn, outOfPlay, step, at, scriptInput, demoCheck, selfCheck };
   if (typeof module !== 'undefined') module.exports = root.SIM;
 })(typeof window !== 'undefined' ? window : globalThis);

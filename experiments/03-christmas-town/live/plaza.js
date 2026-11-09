@@ -56,13 +56,13 @@
       L.solid(Math.round(x / 2) * 2 - 2, Math.round(y / 2) * 2, 6, 6, on > 0 ? [dim[0] + (c[0] - dim[0]) * on, dim[1] + (c[1] - dim[1]) * on, dim[2] + (c[2] - dim[2]) * on] : dim); }
     // місця для прикрас: порожні — «дірки» (тьмяний гачок-кільце), щоб було видно, чого бракує
     const hung = (v) => v !== -1 && GT >= v;
-    LV.TREE.orn.forEach(([u, v], i) => { const [x, y] = T.pt(u, v), xx = x + X(1), yy = y + Y(1), k = (window.LEVELS.street.ORNAMENTS[i] || [0, 0, 0])[2];
+    LV.TREE.orn.forEach(([u, v], i) => { const [x, y] = T.pt(u, v), xx = x + X(1), yy = y + Y(1), k = T.ornKind(i);
       if (!hung(tr.orn[i])) { L.ring(xx, yy + 24, 20, 20, [0.7, 0.8, 1], 0.28 + 0.1 * Math.sin(t * 2 + i), 0.12); return; }
       const sw = 0.12 * Math.sin(t * 1.8 + i) + 0.5 * Math.exp(-(GT - tr.orn[i]) * 3) * Math.sin((GT - tr.orn[i]) * 14);   // сіла — погойдалась
       L.sprite(ORN[k], 0, 0, { m: M.of(M.t(xx, yy), M.r(sw)), h: 52, pivot: [L.hsz(ORN[k], 52) / 2, 2] }); });
     LV.TREE.candy.forEach(([u, v], i) => { if (!hung(tr.candy[i])) return; const [x, y] = T.pt(u, v), sw = 0.1 * Math.sin(t * 1.6 + i * 1.7);
       L.sprite('it_cane', 0, 0, { m: M.of(M.t(x + X(1), y + Y(1)), M.r(sw)), h: 40, pivot: [L.hsz('it_cane', 40) / 2, 2] }); });
-    T.gifts.forEach((dx, i) => { const x = T.x + dx + X(1), y = GY + 6 + Y(1), n = GIFT[i], h = 74;
+    T.gifts.forEach((dx, i) => { const x = T.x + dx + X(1), y = GY + 6 + Y(1), n = GIFT[i % 2], h = i < 2 ? 74 : 62;
       if (!hung(tr.gift[i])) { L.ring(x, y - 30, 34, 14, [0.7, 0.8, 1], 0.22, 0.1); return; }
       const sq = 1 + 0.25 * Math.exp(-(GT - tr.gift[i]) * 6) * Math.cos((GT - tr.gift[i]) * 20);           // приземлився — «пружинить»
       L.sprite(n, Math.round(x - L.hsz(n, h) / 2), Math.round(y - h * sq), { h: h * sq, w: L.hsz(n, h) / Math.sqrt(sq) }); });
@@ -80,7 +80,7 @@
       const q = SS(0, 1, a / e.fly), x0 = e.x + X(1), y0 = e.y + Y(1), x1 = e.tx + X(1), y1 = e.ty + Y(1) + (e.kind === 'gift' ? -30 : 0);
       const cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - (e.kind === 'star' ? 260 : 160);
       const x = (1 - q) ** 2 * x0 + 2 * (1 - q) * q * cx + q * q * x1, y = (1 - q) ** 2 * y0 + 2 * (1 - q) * q * cy + q * q * y1;
-      const n = e.kind === 'orn' ? ORN[(window.LEVELS.street.ORNAMENTS[e.i] || [0, 0, 0])[2]] : e.kind === 'gift' ? GIFT[e.i] : e.kind === 'candy' ? 'it_cane' : 'star';
+      const n = e.kind === 'orn' ? ORN[LV.TREE.ornKind(e.i)] : e.kind === 'gift' ? GIFT[e.i % 2] : e.kind === 'candy' ? 'it_cane' : 'star';
       const h = e.kind === 'gift' ? 64 : e.kind === 'star' ? 70 + 30 * Math.sin(q * Math.PI) : 48;
       for (let j = 1; j < 6; j++) { const qq = Math.max(0, q - j * 0.04);
         const tx = (1 - qq) ** 2 * x0 + 2 * (1 - qq) * qq * cx + qq * qq * x1, ty = (1 - qq) ** 2 * y0 + 2 * (1 - qq) * qq * cy + qq * qq * y1;

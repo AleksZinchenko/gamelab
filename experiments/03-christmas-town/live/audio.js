@@ -111,6 +111,17 @@
         case 'lamp': play('bell', 0.35, 1.25, p); chime(1318, 0.09, 0.05, p, 1.2); chime(1975, 0.06, 0.15, p, 1.2); break;
         case 'faint': play('oops', 0.5, 0.7, p); break;
         case 'revive': play('revive', 0.55, 1, p); break;
+        // ---- дахи ----
+        case 'grab': play('wood', 0.35, 1.3, p); break;
+        case 'rung': play('wood', 0.22, 1.5 + 0.2 * ((e.t * 7) % 1), p); break;                       // щабель драбини
+        case 'slide': noise(0.1, 1200, 2500, 0.05, 'bandpass', 0, p); break;                        // шурхіт снігу під ногами
+        case 'chimney': play('whoosh', 0.35, 0.6, p); chime(1046, 0.08, 0.05, p, 1); chime(1568, 0.06, 0.15, p, 1); break;
+        case 'coo': play('spot', 0.35, 1.6, p); break;                                              // голуб помітив
+        case 'dive': noise(0.4, 500, 1800, 0.12, 'bandpass', 0, p); break;
+        case 'pigeonout': play('punch1', 0.5, 1.4, p); for (let j = 0; j < 6; j++) noise(0.05, 1500, 900, 0.08, 'bandpass', j * 0.06, p, 2); break;
+        case 'creak': play('wood', 0.5, 0.5, p); noise(0.5, 300, 900, 0.08, 'bandpass', 0, p); break;   // пласт зрушив з місця
+        case 'whoosh2': play('whoosh', 0.45, 0.8, p); break;
+        case 'slabsmash': play('land', 0.8, 0.7, p); noise(0.6, 1500, 200, 0.35, 'lowpass', 0, p, 0.7); break;
         // ---- площа ----
         case 'gate': play('ui_open', 0.5, 0.9, p); play('whoosh', 0.45, 0.8, p); break;
         case 'locked': play('wood', 0.6, 0.6, p); play('wood', 0.5, 0.55, p, 0.16); break;          // «тук-тук» у зачинену браму

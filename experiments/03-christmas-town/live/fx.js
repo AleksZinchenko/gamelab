@@ -45,8 +45,20 @@
         // намальований шарф злодюжки (той самий шматок з листа частин), крутиться в повітрі й тьмяніє
         const sh = 66, sw = L.hsz('thief_scarf', sh);
         L.sprite('thief_scarf', 0, 0, { m: LIB.M.of(LIB.M.t(x, y), LIB.M.r(r)), w: sw, h: sh, pivot: [sw / 2, sh / 2], u: { alpha: 1 - SS(1.6, 2.2, a) } }); }
-      if (e.k === 'lamp' && a < 1) { L.glow(ex, ey, 260 * SS(0, 0.25, a), [1, 0.75, 0.4], 0.8 * (1 - a), 2.2);
+      if ((e.k === 'lamp' || e.k === 'chimney') && a < 1) { L.glow(ex, ey, 260 * SS(0, 0.25, a), [1, 0.75, 0.4], 0.8 * (1 - a), 2.2);
         for (let j = 0; j < 10; j++) { const an = j * 0.628 + 0.3, d = 20 + 120 * a; L.star(ex + Math.cos(an) * d, ey + Math.sin(an) * d, 10, [1, 0.9, 0.6], 1 - a); } }
+      // голуб отримав шишку: пір'я розлітається й повільно падає, сірий шарфик злітає
+      if (e.k === 'pigeonout' && a < 2) { for (let j = 0; j < 9; j++) { const s = rnd(e.t, j);
+          px(ex + (s - 0.5) * 160 * Math.min(1, a * 3) + 12 * Math.sin(a * 5 + j), ey - 50 * Math.min(1, a * 3) + 70 * a * a * 0.3 + 40 * a, 4, [0.55, 0.6, 0.72], 1 - SS(1.4, 2, a)); }
+        const sh = 36, sw = L.hsz('thief_scarf', sh);
+        L.sprite('thief_scarf', 0, 0, { m: LIB.M.of(LIB.M.t(ex + 90 * a, ey - 120 * a + 90 * a * a), LIB.M.r(a * 6)), w: sw, h: sh, pivot: [sw / 2, sh / 2], u: { alpha: 1 - SS(1.4, 2, a) } }); }
+      // сніжний пласт розбився: великий сніжний вибух
+      if (e.k === 'slabsmash' && a < 0.8) { const q = a / 0.8;
+        for (let j = 0; j < 22; j++) { const s = rnd(e.t, j), side = j % 2 ? 1 : -1; px(ex + side * (10 + 170 * (1 - (1 - q) ** 2) * (0.3 + s)), ey - 4 - 150 * s * q * (1 - q) * 2, 6, SNOW, 1 - q); }
+        L.puff(ex, ey - 20, 60 + 60 * q, SNOW, 0.5 * (1 - q), e.t); }
+      // ковзання по скату: сніг бризкає з-під ніг
+      if (e.k === 'slide' && a < 0.3) for (let j = 0; j < 2; j++) { const q = a / 0.3, s = rnd(e.t, j);
+        px(ex - e.d * (10 + 50 * q) , ey - 6 - 40 * q * (1 - q) * (1 + s) * 2, 4, SNOW, 0.9 * (1 - q)); }
       if (e.k === 'ding' && a < 0.3) L.star(ex, ey, 30 * (1 - a / 0.3), [1, 1, 0.9], 1);
       if (e.k === 'faint' && a < 1.6) for (let j = 0; j < 4; j++) { const an = GT * 4 + j * 1.57; L.star(ex + Math.cos(an) * 40, ey - 70 + Math.sin(an) * 10, 10, [1, 0.95, 0.6], 1); }
       if (e.k === 'revive' && a < 0.8) L.ring(ex, ey - 80, 40 + 120 * a, 40 + 120 * a, [1, 0.9, 0.6], 1 - a / 0.8, 0.1);

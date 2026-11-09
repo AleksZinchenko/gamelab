@@ -10,10 +10,11 @@
   // Точки — у частках текстури tree_square (u — зліва направо, v — згори вниз), виміряно сіткою (frames/tree_grid.png).
   // Прикраси висять під снігом кожного ярусу — там темна хвоя, кулька на ній читається.
   const TREE = { x: 1500, h: 800, top: [0.5, 0.035],
-    orn: [[0.40, 0.30], [0.62, 0.42], [0.30, 0.55], [0.70, 0.66], [0.45, 0.80]],           // 5 прикрас Пекарської
+    orn: [[0.40, 0.30], [0.62, 0.42], [0.30, 0.55], [0.70, 0.66], [0.45, 0.80],             // 5 прикрас Пекарської
+      [0.44, 0.21], [0.60, 0.31], [0.48, 0.45], [0.38, 0.66], [0.78, 0.70]],                   // 5 прикрас з дахів
     candy: [[0.56, 0.19], [0.36, 0.43], [0.73, 0.52], [0.22, 0.67], [0.55, 0.69], [0.84, 0.80], [0.16, 0.82], [0.64, 0.86]],
     tiers: [0.17, 0.27, 0.38, 0.50, 0.63, 0.76],                                              // лінії гірлянди
-    gifts: [-175, 180] };                                                                     // подарунки під ялинкою (зсув x)
+    gifts: [-175, 180, -265, 270] };                                                          // подарунки під ялинкою (зсув x): вулиця, дахи
   TREE.w = TREE.h * LV0.TEX.tree_square[0] / LV0.TEX.tree_square[1];
   TREE.x0 = TREE.x - TREE.w / 2; TREE.y0 = GY - TREE.h + 8;                                  // лівий верхній кут спрайта (+8 — «вкопана»)
   TREE.pt = (u, v) => [TREE.x0 + u * TREE.w, TREE.y0 + v * TREE.h];
@@ -22,6 +23,9 @@
   const slotPos = (k, i) => k === 'orn' ? TREE.pt(...TREE.orn[i]) : k === 'candy' ? TREE.pt(...TREE.candy[i])
     : k === 'gift' ? [TREE.x + TREE.gifts[i], GY - 34] : TREE.pt(...TREE.top);
   const N_CANDY = TREE.candy.length;
+  // з якого рівня кожне місце на ялинці: прикраси 0–4 — вулиця, 5–9 — дахи; подарунки 0–1 — вулиця, 2–3 — дахи
+  const OFF = { street: { orn: 0, gift: 0 }, roofs: { orn: 5, gift: 2 } };
+  TREE.ornKind = (slot) => { const lv = slot < 5 ? 'street' : 'roofs', L = root.LEVELS[lv], q = L && L.ORNAMENTS[slot - OFF[lv].orn]; return q ? q[2] : 0; };
 
   // ---------------- ратуша і брами ----------------
   const TH = { x: 1820, k: 0.66 };            // ратуша: лівий край і масштаб (менша за будинки вулиці — «стоїть у глибині площі»)
@@ -31,26 +35,26 @@
   const GATES = [
     { x: 190, to: 'street', name: 'Пекарська вулиця', dir: -1 },
     { x: TH.x + TH.w / 2, to: null, name: 'Ратушна вежа' },
-    { x: 3070, to: null, name: 'Дахи й димарі', dir: 1 },
+    { x: 3070, to: 'roofs', name: 'Дахи й димарі', dir: 1 },
     { x: 3790, to: null, name: 'Замерзла річка', dir: 1 },
   ];
 
   // ---------------- прогрес (PROG): що вже висить на ялинці і що лежить у торбі ----------------
   // У браузері — localStorage (переживає перезапуск), у node і в приватному вікні — просто в пам'яті.
-  const KEY = 'yalynka.prog.v1';
-  const blank = () => ({ orn: [0, 0, 0, 0, 0], gifts: [0, 0], star: 0, candy: 0, best: 0, bag: { orn: [], gifts: [], star: 0 }, lit: 0 });
+  const KEY = 'yalynka.prog.v2';
+  const blank = () => ({ orn: TREE.orn.map(() => 0), gifts: TREE.gifts.map(() => 0), star: 0, candy: 0, best: 0, bag: { orn: [], gifts: [], star: 0 }, lit: 0 });
   const PROG = { d: blank(), last: '' };
   PROG.load = () => { try { const s = root.localStorage && localStorage.getItem(KEY); if (s) PROG.d = Object.assign(blank(), JSON.parse(s)); } catch (e) {} return PROG.d; };
   PROG.write = () => { const s = JSON.stringify(PROG.d); if (s === PROG.last) return; PROG.last = s;
     try { if (root.localStorage) localStorage.setItem(KEY, s); } catch (e) {} };
   PROG.reset = () => { PROG.d = blank(); PROG.write(); };
   PROG.any = () => { const d = PROG.d; return d.orn.some(Boolean) || d.gifts.some(Boolean) || d.star || d.candy || d.bag.orn.length || d.bag.gifts.length || d.bag.star; };
-  // Вулицю пройдено: усе зібране, чого ще нема ні на ялинці, ні в торбі, — кладемо в торбу.
-  PROG.bank = (S) => { const d = PROG.d, b = d.bag;
-    S.orn.forEach((g, i) => { if (g >= 0 && !d.orn[i] && !b.orn.includes(i)) b.orn.push(i); });
-    [0, 1].forEach((i) => { if (S.gifts[i] >= 0 && !d.gifts[i] && !b.gifts.includes(i)) b.gifts.push(i); });
-    if (S.gifts[2] >= 0 && !d.star) b.star = 1;                                              // третій «подарунок» вулиці — зірка
-    d.best = Math.max(d.best, S.sw); PROG.write(); };
+  // Рівень пройдено: усе зібране, чого ще нема ні на ялинці, ні в торбі, — кладемо в торбу (номери місць на ялинці).
+  PROG.bank = (S, lv = 'street') => { const d = PROG.d, b = d.bag, o = OFF[lv] || OFF.street;
+    S.orn.forEach((g, i) => { const k = o.orn + i; if (g >= 0 && !d.orn[k] && !b.orn.includes(k)) b.orn.push(k); });
+    [0, 1].forEach((i) => { const k = o.gift + i; if (S.gifts[i] >= 0 && !d.gifts[k] && !b.gifts.includes(k)) b.gifts.push(k); });
+    if (lv === 'street' && S.gifts[2] >= 0 && !d.star) b.star = 1;                           // третій «подарунок» вулиці — зірка
+    if (lv === 'street') d.best = Math.max(d.best, S.sw); PROG.write(); };
   // Площа щокадру повертає свій стан: що вже долетіло до ялинки (летить — теж рахуємо), що лишилось у торбі, чи сяє.
   PROG.sync = (S) => { const d = PROG.d, T = S.tree;
     d.orn = T.orn.map((v) => (v !== -1 ? 1 : 0)); d.gifts = T.gift.map((v) => (v !== -1 ? 1 : 0));
@@ -58,8 +62,8 @@
     d.bag = { orn: [], gifts: [], star: 0 }; for (const q of S.bagQ) { if (q.k === 'orn') d.bag.orn.push(q.i); else if (q.k === 'gift') d.bag.gifts.push(q.i); else if (q.k === 'star') d.bag.star = 1; }
     d.lit = S.fin !== -1 ? 1 : 0; PROG.write(); };
   // Для перевірок: ?prog=bag — торба з усім добром вулиці (ялинка гола), ?prog=lit — ялинка вже сяє.
-  PROG.dev = (mode) => { if (mode === 'bag') PROG.d = Object.assign(blank(), { best: ST_LV.SWEETS.length, bag: { orn: [0, 1, 2, 3, 4], gifts: [0, 1], star: 1 } });
-    if (mode === 'lit') PROG.d = Object.assign(blank(), { orn: [1, 1, 1, 1, 1], gifts: [1, 1], star: 1, candy: N_CANDY, best: ST_LV.SWEETS.length, lit: 1 }); };
+  PROG.dev = (mode) => { if (mode === 'bag') PROG.d = Object.assign(blank(), { best: ST_LV.SWEETS.length, bag: { orn: TREE.orn.map((_, i) => i), gifts: TREE.gifts.map((_, i) => i), star: 1 } });
+    if (mode === 'lit') PROG.d = Object.assign(blank(), { orn: TREE.orn.map(() => 1), gifts: TREE.gifts.map(() => 1), star: 1, candy: N_CANDY, best: ST_LV.SWEETS.length, lit: 1 }); };
 
   // ---------------- правила площі ----------------
   const FLY = 0.8, FLY_STAR = 1.4, GAP = 0.42;   // скільки летить річ на ялинку, зірка; пауза між речами
@@ -101,7 +105,7 @@
     SURFX: [[TREE.x - 0.24 * TREE.w, GY - 0.075 * TREE.h + 8, TREE.x + 0.24 * TREE.w, GY - 0.075 * TREE.h + 8]],
     SWEETS: [], ORNAMENTS: [], THIEVES: [], BULLIES: [], AMMO: [],
     GATES, TREE, TH, slotPos, onInit, onStep,
-    HINT: 'Неси добро до ялинки. Брама «Пекарська вулиця» — ліворуч: підійди й натисни ↑',
+    HINT: 'Неси добро до ялинки. Брами на вулиці — ліворуч і праворуч: підійди й натисни ↑',
   };
   root.LEVELS.hub = HUB;
   root.PROG = PROG; PROG.load();

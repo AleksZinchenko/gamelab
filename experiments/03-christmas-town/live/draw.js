@@ -161,16 +161,16 @@
       if (e.st === 'throw') Q = a < 0.35 ? L.lerpP(Q, P.wind, L.SS(0, 0.3, a)) : L.lerpP(P.wind, P.fling, L.SS(0.35, 0.45, a));
     }
     if (hit && !gone) Q = L.lerpP(Q, P.hit, Math.exp(-(GT - e.hitT) / 0.12));
-    const x = Math.round(e.x + X(1) + (e.st === 'cower' ? 2 * Math.sin(GT * 70) : 0)), y = Math.round(GY + Y(1));
+    const x = Math.round(e.x + X(1) + (e.st === 'cower' ? 2 * Math.sin(GT * 70) : 0)), y = Math.round((e.y || GY) + Y(1));   // своя висота (дахи)
     const fade = gone ? 1 - L.SS(1.6, 2.5, a) : 1, u = { alpha: fade, tint: hit ? [1, 0.5, 0.45, 0.55] : [1, 1, 1, 0] };
-    if (!L.sp) L.shadow(x, GY + Y(1) + 3, kind === 'bully' ? 46 : 34, 7, 0.5 * fade);
+    if (!L.sp) L.shadow(x, (e.y || GY) + Y(1) + 3, kind === 'bully' ? 46 : 34, 7, 0.5 * fade);
     const extra = kind === 'thief' && !gone ? { behind: (sh) => { const s = 92;
       L.sprite('sack', 0, 0, { m: M.of(M.t(sh[0] - face * 8, sh[1] + 6), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s, h: s, pivot: [s / 2, s * 0.25], flip: face < 0, u }); } } : null;
     const J = puppet(kind, Q, x, y, face, u, extra);
     L.joint(kind + i, 'hand', J.hand);
     // вугілля в кисті під час замаху; у момент кидка далі летить снаряд із симуляції — з тієї ж точки
     if (kind === 'bully' && e.st === 'throw' && a < 0.45 && !L.sp) L.sprite('coal', J.hand[0] - 15, J.hand[1] - 15, { w: 30 });
-    if (kind === 'bully' && e.st === 'throw' && a > 0.43 && a < 0.45) L.anchor('coal' + i, [e.x + face * 11 + X(1), GY - 192 + Y(1)], J.hand, 16);
+    if (kind === 'bully' && e.st === 'throw' && a > 0.43 && a < 0.45) L.anchor('coal' + i, [e.x + face * 11 + X(1), (e.y || GY) - 192 + Y(1)], J.hand, 16);
     if (e.st === 'cower' || (hit && e.hp > 0)) for (let j = 0; j < 3; j++) { const an = GT * 5 + j * 2.1;
       L.star(J.head[0] + Math.cos(an) * 30, J.head[1] - 14 + Math.sin(an) * 8, 8, [1, 0.9, 0.5], 0.9); }
   };
@@ -186,8 +186,8 @@
       const yy = y + 7 * Math.sin(t * 1.9 + i) + Y(1), xx = x + X(1), sw = Math.sin(t * 2.2 + i) * 0.18;
       L.glow(xx, yy, 70, [1, 0.85, 0.5], 0.3, 3); L.sprite(ORN[k], 0, 0, { m: M.of(M.t(xx, yy - 26), M.r(sw)), h: 60, pivot: [L.hsz(ORN[k], 60) / 2, 2] });
       if ((t * 0.9 + i * 0.37) % 1 < 0.15) L.star(xx + 12, yy - 8, 14, [1, 1, 0.9], 1 - ((t * 0.9 + i * 0.37) % 1) / 0.15); });
-    LV.AMMO.forEach(([x, kind], i) => { if (ST.am[i] !== -1 || !onScreen(x)) return; const n = kind ? 'cracker' : 'branch', h = kind ? 56 : 62;
-      L.glow(x + X(1), GY - 50 + Y(1), 60, [0.8, 1, 0.7], 0.15, 3); L.sprite(n, x + X(1) - L.hsz(n, h) / 2, GY - h - 6 + Y(1) + 3 * Math.sin(t * 2 + i), { h }); });
+    LV.AMMO.forEach(([x, kind, ay], i) => { if (ST.am[i] !== -1 || !onScreen(x)) return; const n = kind ? 'cracker' : 'branch', h = kind ? 56 : 62, gy = ay || GY;
+      L.glow(x + X(1), gy - 50 + Y(1), 60, [0.8, 1, 0.7], 0.15, 3); L.sprite(n, x + X(1) - L.hsz(n, h) / 2, gy - h - 6 + Y(1) + 3 * Math.sin(t * 2 + i), { h }); });
     for (const g of ST.drops) { if (ST.gifts[g.i] >= 0) continue; const n = GIFT[g.i], h = 64, xx = g.x + X(1), yy = g.y + Y(1);
       L.glow(xx, yy - 30, 90, [1, 0.8, 0.45], 0.35 + 0.1 * Math.sin(t * 4), 3); L.sprite(n, xx - L.hsz(n, h) / 2, yy - h + (g.on ? 2 * Math.sin(t * 3) : 0), { h }); }
     for (const s of ST.loose) { const age = GT - s.t0, a = age > 5.5 ? (Math.floor(age * 10) % 2 ? 0.3 : 1) : 1;   // скоро зникне — блимає

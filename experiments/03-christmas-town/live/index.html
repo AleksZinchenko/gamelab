@@ -21,7 +21,7 @@ const V = Date.now(), STATIC = !!window.__STATIC__;          // STATIC: packed b
 const load = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src + '?v=' + V; s.onload = res; s.onerror = () => rej(new Error('failed ' + src)); document.head.appendChild(s); });
 (async () => {
   // sizes.js: window.SIZES (display size per sprite in view px, engine.md §7); audio.js: sound from the event bus (stub until used)
-  for (const f of ['assets.js', 'sizes.js', 'gl.js', 'lib.js', 'level.js', 'hub.js', 'actors.js', 'sim.js', 'draw.js', 'plaza.js', 'fx.js', 'hud.js', 'scene.js', 'audio.js']) await load(f);
+  for (const f of ['assets.js', 'sizes.js', 'gl.js', 'lib.js', 'level.js', 'hub.js', 'roofs.js', 'actors.js', 'sim.js', 'draw.js', 'plaza.js', 'roofdraw.js', 'fx.js', 'hud.js', 'scene.js', 'audio.js']) await load(f);
   const q = new URLSearchParams(location.search), render = q.has('render');
   // [гра] ?prog=bag — торба з усім добром вулиці (перевірити фінал), ?prog=lit — ялинка вже сяє, ?prog=reset — гола ялинка
   if (q.get('prog') === 'reset') PROG.reset(); else if (q.get('prog')) { PROG.dev(q.get('prog')); PROG.write(); }
@@ -62,12 +62,12 @@ const load = (src) => new Promise((res, rej) => { const s = document.createEleme
   // go(рівень, звідки) — новий стан на іншому рівні, з коротким світлішанням екрана
   function go(name, o) { SIM.use(name); play = SIM.spawn(simT, o); for (const k in keys) keys[k] = 0; UI.mode = 'play'; fade = null; fadeIn = simT;
     if (window.AUDIO && AUDIO.refresh) AUDIO.refresh(); }
-  const FROM_STREET = { x: 330, face: 1 };                       // на площі з'являємось біля брами «Пекарська вулиця»
+  const FROM = { street: { x: 330, face: 1 }, roofs: { x: 2960, face: -1 } };   // на площі з'являємось біля брами, з якої прийшли
   function doAct(a) { if (!a) return;
     if (a === 'start') go('hub');
     else if (a === 'restart') go(SIM.LV.name);
-    else if (a === 'again') go('street');
-    else if (a === 'tohub') go('hub', FROM_STREET);
+    else if (a === 'again') go(SIM.LV.name);
+    else if (a === 'tohub') go('hub', FROM[SIM.LV.name]);
     else if (a === 'resume') UI.mode = 'play';
     else if (a === 'tomenu') { play = null; SIM.use('street'); UI.open('menu'); if (window.AUDIO && AUDIO.refresh) AUDIO.refresh(); } }
   // pointer in view pixels (VW×VH); click is true for exactly one sim step
@@ -95,7 +95,7 @@ const load = (src) => new Promise((res, rej) => { const s = document.createEleme
       if (play.exit && !fade) fade = { t0: simT, to: play.exit };
       if (fade && simT - fade.t0 >= 0.35) go(fade.to);
       SCENE.state = play;
-      if (play.done >= 0 && !play.banked) { play.banked = 1; PROG.bank(play); }          // вулицю пройдено — добро в торбу
+      if (play.done >= 0 && !play.banked) { play.banked = 1; PROG.bank(play, SIM.LV.name); }          // вулицю пройдено — добро в торбу
       if (play.done >= 0 && play.t - play.done > 2.2) UI.open('done');
       if (SIM.LV.HUB) { PROG.sync(play); if (play.finUI === 1) { play.finUI = 2; UI.open('final'); } }
     } else SCENE.state = play && UI.mode !== 'menu' && UI.mode !== 'controls' ? play : null;
@@ -108,7 +108,7 @@ const load = (src) => new Promise((res, rej) => { const s = document.createEleme
   };
   loop();
   if (STATIC) { dev.style.display = 'none'; return; }
-  const WATCH = ['index.html', 'scene.js', 'sim.js', 'lib.js', 'gl.js', 'assets.js', 'sizes.js', 'audio.js', 'level.js', 'hub.js', 'actors.js', 'draw.js', 'plaza.js', 'fx.js', 'hud.js'], stamp = {};
+  const WATCH = ['index.html', 'scene.js', 'sim.js', 'lib.js', 'gl.js', 'assets.js', 'sizes.js', 'audio.js', 'level.js', 'hub.js', 'roofs.js', 'actors.js', 'draw.js', 'plaza.js', 'roofdraw.js', 'fx.js', 'hud.js'], stamp = {};
   const poll = async () => {
     for (const f of WATCH) {
       try { const r = await fetch(f + '?poll=' + Date.now(), { method: 'HEAD', cache: 'no-store' }); const m = r.headers.get('last-modified') + r.headers.get('content-length');

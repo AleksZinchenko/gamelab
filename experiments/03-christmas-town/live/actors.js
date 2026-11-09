@@ -5,13 +5,18 @@
   const LV = root.LEVEL || require('./level.js');
   const GY = LV.GY;
   const G_PROJ = 1500, G_COAL = 2400;           // гравітація для шишки й вугілля (px/с²)
-  const BOX = { thief: [70, 175], bully: [110, 190] };   // «тіло» ворога для влучань: ширина, висота
+  const BOX = { thief: [70, 175], bully: [110, 190], pigeon: [70, 60] };   // «тіло» ворога для влучань: ширина, висота
   const h1 = (n) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
   // Початковий стан усіх акторів рівня (кладеться в S при create()).
   const init = () => ({
-    th: LV.THIEVES.map((d) => ({ x: d.x, vx: 0, face: -1, st: 'idle', hp: 2, stT: 0, hitT: -9, dist: 0 })),
-    bu: LV.BULLIES.map((d) => ({ x: d.x, face: -1, st: 'idle', hp: 3, stT: 0, hitT: -9, nextT: 1.5 })),
+    // y — на якій висоті стоїть ворог (на дахах — свій дах; за замовчуванням — земля)
+    th: LV.THIEVES.map((d) => ({ x: d.x, y: d.y || GY, vx: 0, face: -1, st: 'idle', hp: 2, stT: 0, hitT: -9, dist: 0 })),
+    bu: LV.BULLIES.map((d) => ({ x: d.x, y: d.y || GY, face: -1, st: 'idle', hp: 3, stT: 0, hitT: -9, nextT: 1.5 })),
+    // голуби: сидять на гребені (px, py — сідало), помітили героя — злітають і пікірують
+    pg: (LV.PIGEONS || []).map((d) => ({ x: d.x, y: d.y, vx: 0, vy: 0, face: -1, st: 'sit', stT: 0, hitT: -9, nextT: 0, tx: 0, ty: 0 })),
+    // сніжні пласти на скатах: лежать → сповзають → падають з краю → б'ються внизу (оглушують ворогів)
+    sl: (LV.SLABS || []).map((d) => ({ x: d.x, y: d.y, vx: 0, vy: 0, st: 'rest', stT: 0, a: 0 })),
     shots: [],                                    // снаряди в польоті
     drops: [],                                    // подарунки, які випали зі злодюжок і падають/лежать
     loose: [],                                    // солодощі, що висипались при ударі (їх можна встигнути підібрати)
@@ -43,20 +48,23 @@
 
   // Пошкодження ворога (шишка = 1, хлопавка = 2). Злодюжка на нулі впускає подарунок; хуліган — тікає.
   function damage(S, t, kind, i, n, fromX) {
+    if (kind === 'pigeon') { const p = S.pg[i]; if (p.st === 'gone') return;                       // голубу вистачає однієї шишки
+      p.st = 'gone'; p.stT = t; p.vx = (Math.sign(p.x - fromX) || 1) * 380; p.vy = -420; S.ev.push({ k: 'pigeonout', t, x: p.x, y: p.y - 30, i }); return; }
     const e = kind === 'thief' ? S.th[i] : S.bu[i];
     if (e.st === 'gone' || t - e.hitT < 0.25) return;
     e.hp -= n; e.hitT = t; e.face = Math.sign(fromX - e.x) || e.face;
-    S.ev.push({ k: kind + 'hit', t, x: e.x, y: GY - BOX[kind][1] * 0.6, i });
+    S.ev.push({ k: kind + 'hit', t, x: e.x, y: e.y - BOX[kind][1] * 0.6, i });
     if (e.hp > 0) { e.st = 'hit'; e.stT = t; return; }
     e.st = 'gone'; e.stT = t; e.vx = (Math.sign(e.x - fromX) || 1) * (kind === 'thief' ? 620 : 420);
-    S.ev.push({ k: kind + 'out', t, x: e.x, y: GY - BOX[kind][1], i });            // злітає сірий шарф, ворог тікає
-    if (kind === 'thief') S.drops.push({ i: LV.THIEVES[i].gift, x: e.x, y: GY - 120, vx: -e.vx * 0.25, vy: -900, on: 0, t0: t });
+    S.ev.push({ k: kind + 'out', t, x: e.x, y: e.y - BOX[kind][1], i });            // злітає сірий шарф, ворог тікає
+    if (kind === 'thief') S.drops.push({ i: LV.THIEVES[i].gift, x: e.x, y: e.y - 120, vx: -e.vx * 0.25, vy: -900, on: 0, t0: t });
   }
 
   function hitEnemy(S, x, y, r) {                 // хто з ворогів у колі (x, y, r)? → [kind, i]
     for (const [kind, arr] of [['thief', S.th], ['bully', S.bu]]) for (let i = 0; i < arr.length; i++) { const e = arr[i];
       if (e.st === 'gone') continue; const [w, h] = BOX[kind];
-      if (x > e.x - w / 2 - r && x < e.x + w / 2 + r && y > GY - h - r && y < GY + r) return [kind, i]; }
+      if (x > e.x - w / 2 - r && x < e.x + w / 2 + r && y > e.y - h - r && y < e.y + r) return [kind, i]; }
+    for (let i = 0; i < S.pg.length; i++) { const p = S.pg[i]; if (p.st !== 'gone' && Math.hypot(x - p.x, y - (p.y - 30)) < 40 + r) return ['pigeon', i]; }
     return null;
   }
 
@@ -66,7 +74,7 @@
       if (e.st === 'gone') { e.x += e.vx * dt; e.dist += Math.abs(e.vx) * dt; return; }
       if (e.st === 'hit') { e.vx *= 0.9; e.x += e.vx * dt; if (t - e.stT > 0.4) { e.st = 'flee'; e.stT = t; } return; }
       if (e.st === 'idle') { const tg = d.x + 140 * Math.sin(t * 0.7 + i); e.vx = Math.max(-110, Math.min(110, (tg - e.x) * 2));
-        if (near) { e.st = 'flee'; e.stT = t; S.ev.push({ k: 'spot', t, x: e.x, y: GY - 190, i }); } }
+        if (near) { e.st = 'flee'; e.stT = t; S.ev.push({ k: 'spot', t, x: e.x, y: e.y - 190, i }); } }
       else if (e.st === 'flee') { const run = -Math.sign(dx) || 1; e.vx = run * 330;
         if ((run < 0 && e.x < d.a) || (run > 0 && e.x > d.b)) { e.st = 'cower'; e.stT = t; }
         else if (!near && Math.abs(dx) > 1100) { e.st = 'idle'; } }
@@ -74,7 +82,7 @@
       else if (e.st === 'dash') { if (t - e.stT > 1.3) { e.st = 'flee'; e.stT = t; } }
       e.x = Math.max(d.a - 60, Math.min(d.b + 60, e.x + e.vx * dt)); if (Math.abs(e.vx) > 5) e.face = Math.sign(e.vx); e.dist += Math.abs(e.vx) * dt;
       // злодюжка, що пробігає крізь героя, «цупить» дві цукерки (без втрати рукавички)
-      if (Math.abs(S.x - e.x) < 50 && S.y > GY - 40 && S.inv <= 0 && S.sw > 0 && S.faint < 0) { const n = Math.min(2, S.sw); S.sw -= n; S.inv = 0.8;
+      if (Math.abs(S.x - e.x) < 50 && Math.abs(S.y - e.y) < 40 && S.inv <= 0 && S.sw > 0 && S.faint < 0) { const n = Math.min(2, S.sw); S.sw -= n; S.inv = 0.8;
         S.ev.push({ k: 'steal', t, x: S.x, y: S.y - 120, n }); }
     });
     // ---- хулігани: стоять, повертаються до героя, кидають вугілля дугою прямо в нього ----
@@ -84,11 +92,12 @@
       if (e.st === 'hit') { if (t - e.stT > 0.5) { e.st = 'idle'; e.nextT = t + 1.2; } return; }
       if (e.st === 'idle' && Math.abs(dx) < 1000 && S.faint < 0 && S.done < 0 && t > e.nextT) { e.st = 'throw'; e.stT = t; }
       if (e.st === 'throw' && t - e.stT > 0.45) {                        // кидок на кінці замаху, з руки над головою
-        const hx = e.x + e.face * 11, hy = GY - 192,     /* кисть маріонетки в момент кидка (draw.js) */ T = 0.8 + Math.abs(dx) / 2200, ty = S.y - 70;
+        const hx = e.x + e.face * 11, hy = e.y - 192,     /* кисть маріонетки в момент кидка (draw.js) */ T = 0.8 + Math.abs(dx) / 2200, ty = S.y - 70;
         S.shots.push({ k: 'coal', x: hx, y: hy, vx: (S.x - hx) / T, vy: (ty - hy - 0.5 * G_COAL * T * T) / T, t0: t, a: 0 });
         S.ev.push({ k: 'throw', t, x: hx, y: hy, i }); e.st = 'idle'; e.nextT = t + 2.1 + 0.8 * h1(i + t); }
-      if (Math.abs(dx) < 70 && S.y > GY - 160) hurt(S, t, e.x);         // впритул до хулігана — боляче
+      if (Math.abs(dx) < 70 && S.y > e.y - 160 && S.y < e.y + 30) hurt(S, t, e.x);   // впритул до хулігана — боляче
     });
+    pigeons(S, t, dt); slabs(S, t, dt, W);
     // ---- снаряди ----
     for (let k = S.shots.length - 1; k >= 0; k--) { const p = S.shots[k], age = t - p.t0;
       p.vy += (p.k === 'coal' ? G_COAL : G_PROJ) * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += (p.k === 'cracker' ? 9 : 14) * dt * Math.sign(p.vx || 1);
@@ -114,8 +123,8 @@
     S.got.forEach((g, i) => { if (g === -1 && near(LV.SWEETS[i][0], LV.SWEETS[i][1], 70)) { S.got[i] = t; S.sw++; S.combo = t - S.comboT < 0.6 ? S.combo + 1 : 0; S.comboT = t;
       S.ev.push({ k: 'collect', t, x: LV.SWEETS[i][0], y: LV.SWEETS[i][1], i, c: S.combo }); } });
     S.orn.forEach((g, i) => { if (g === -1 && near(LV.ORNAMENTS[i][0], LV.ORNAMENTS[i][1], 80)) { S.orn[i] = t; S.ev.push({ k: 'ornament', t, x: LV.ORNAMENTS[i][0], y: LV.ORNAMENTS[i][1], i }); } });
-    S.am.forEach((g, i) => { const [ax, kind] = LV.AMMO[i]; if (g === -1 && near(ax, GY - 60, 90)) { S.am[i] = t;
-      if (kind) S.crackers = Math.min(9, S.crackers + 3); else S.cones = Math.min(40, S.cones + 12); S.ev.push({ k: 'ammo', t, x: ax, y: GY - 60, i, kind }); } });
+    S.am.forEach((g, i) => { const [ax, kind, ayy] = LV.AMMO[i], ay = (ayy || GY) - 60; if (g === -1 && near(ax, ay, 90)) { S.am[i] = t;
+      if (kind) S.crackers = Math.min(9, S.crackers + 3); else S.cones = Math.min(40, S.cones + 12); S.ev.push({ k: 'ammo', t, x: ax, y: ay, i, kind }); } });
     for (const g of S.drops) if (S.gifts[g.i] < 0 && t - g.t0 > 0.5 && near(g.x, g.y - 40, 90)) { S.gifts[g.i] = t; S.ev.push({ k: 'gift', t, x: g.x, y: g.y - 40, i: g.i }); }
     for (let k = S.loose.length - 1; k >= 0; k--) { const s = S.loose[k];
       if (t - s.t0 > 0.5 && near(s.x, s.y, 75)) { S.sw++; S.ev.push({ k: 'collect', t, x: s.x, y: s.y, i: -1, c: 0 }); S.loose.splice(k, 1); }
@@ -125,9 +134,43 @@
   // Вибух хлопавки: конфеті, оглушує всіх ворогів поруч (2 удари), гойдає ліхтарі. Герою не шкодить — гра добра.
   function boom(S, t, x, y, W) {
     S.ev.push({ k: 'boom', t, x, y });
-    S.th.forEach((e, i) => { if (Math.hypot(e.x - x, GY - 90 - y) < 280) damage(S, t, 'thief', i, 2, x); });
-    S.bu.forEach((e, i) => { if (Math.hypot(e.x - x, GY - 100 - y) < 280) damage(S, t, 'bully', i, 2, x); });
+    S.th.forEach((e, i) => { if (Math.hypot(e.x - x, e.y - 90 - y) < 280) damage(S, t, 'thief', i, 2, x); });
+    S.bu.forEach((e, i) => { if (Math.hypot(e.x - x, e.y - 100 - y) < 280) damage(S, t, 'bully', i, 2, x); });
+    S.pg.forEach((p, i) => { if (Math.hypot(p.x - x, p.y - 30 - y) < 300) damage(S, t, 'pigeon', i, 1, x); });
+    S.sl.forEach((s) => { if (s.st === 'rest' && Math.hypot(s.x - x, s.y - y) < 260) { s.st = 'slide'; s.stT = t; } });   // вибух зриває пласт
     LV.LAMPS.forEach((lx, i) => { if (Math.abs(lx - x) < 300) S.la[i][1] += Math.sign(lx - x || 1) * 3; });
+  }
+
+  // ---- голуби банди: сидять → злітають (0.45 с) → пікірують у точку, де був герой → повертаються на сідало ----
+  function pigeons(S, t, dt) {
+    S.pg.forEach((p, i) => { const d = LV.PIGEONS[i], dx = S.x - p.x;
+      if (p.st === 'gone') { p.vy += 500 * dt; p.vy = Math.min(p.vy, -60); p.x += p.vx * dt; p.y += p.vy * dt; return; }   // відлітає геть, угору
+      if (p.st === 'sit') { p.face = Math.sign(dx) || p.face;
+        if (Math.abs(dx) < 560 && Math.abs(S.y - p.y) < 520 && t > p.nextT && S.faint < 0 && !S.climb) { p.st = 'up'; p.stT = t; S.ev.push({ k: 'coo', t, x: p.x, y: p.y - 40, i }); } }
+      else if (p.st === 'up') { p.y -= 420 * dt * Math.max(0, 1 - (t - p.stT) / 0.45); p.x -= p.face * 60 * dt;
+        if (t - p.stT > 0.45) { p.st = 'dive'; p.stT = t; p.tx = S.x; p.ty = S.y - 70; const l = Math.hypot(p.tx - p.x, p.ty - p.y) || 1;
+          p.vx = (p.tx - p.x) / l * 680; p.vy = (p.ty - p.y) / l * 680; p.face = Math.sign(p.vx) || p.face; S.ev.push({ k: 'dive', t, x: p.x, y: p.y, i }); } }
+      else if (p.st === 'dive') { p.x += p.vx * dt; p.y += p.vy * dt;
+        if (Math.hypot(S.x - p.x, S.y - 70 - p.y) < 55) hurt(S, t, p.x);
+        if (t - p.stT > 1.3 || Math.hypot(p.tx - p.x, p.ty - p.y) < 20) { p.st = 'back'; p.stT = t; } }
+      else if (p.st === 'back') { const bx = d.x - p.x, by = d.y - p.y, l = Math.hypot(bx, by);
+        if (l < 12) { p.st = 'sit'; p.x = d.x; p.y = d.y; p.nextT = t + 2.2; return; }
+        const v = Math.min(l / dt, 460); p.x += bx / l * v * dt; p.y += by / l * v * dt; p.face = Math.sign(bx) || p.face; } });
+  }
+  // ---- сніжні пласти: герой поруч (на тому ж даху) або влучання шишки → сповзає по скату, зривається з краю, падає ----
+  function slabs(S, t, dt, W) {
+    S.sl.forEach((s, i) => { const d = LV.SLABS[i];
+      if (s.st === 'rest') { if (Math.abs(S.x - s.x) < 150 && Math.abs(S.y - s.y) < 90 && S.ground) { s.st = 'slide'; s.stT = t; S.ev.push({ k: 'creak', t, x: s.x, y: s.y }); }
+        for (const p of S.shots) if (p.k === 'cone' && Math.hypot(p.x - s.x, p.y - s.y + 20) < 60) { s.st = 'slide'; s.stT = t; S.ev.push({ k: 'creak', t, x: s.x, y: s.y }); }
+        return; }
+      if (s.st === 'slide') { s.vx += d.dir * 900 * dt; s.x += s.vx * dt; const y = W.yAt(d.surf, s.x);
+        if (y === null) { s.st = 'fall'; s.vy = 0; S.ev.push({ k: 'whoosh2', t, x: s.x, y: s.y }); } else s.y = y; return; }
+      if (s.st === 'fall') { s.vy += 2600 * dt; s.x += s.vx * dt * 0.6; s.y += s.vy * dt; s.a += 2 * dt * d.dir;
+        if (Math.abs(S.x - s.x) < 70 && S.y - 120 < s.y && S.y > s.y - 20 && S.inv <= 0) hurt(S, t, s.x);
+        const gy = W.groundBelow(s.x, s.y - s.vy * dt - 2);
+        if (gy !== null && s.y >= gy) { s.y = gy; s.st = 'gone'; s.stT = t; S.ev.push({ k: 'slabsmash', t, x: s.x, y: gy });
+          S.bu.forEach((e, j) => { if (Math.abs(e.x - s.x) < 110 && Math.abs(e.y - gy) < 40) damage(S, t, 'bully', j, 3, s.x); });
+          S.th.forEach((e, j) => { if (Math.abs(e.x - s.x) < 110 && Math.abs(e.y - gy) < 40) damage(S, t, 'thief', j, 2, s.x); }); } } });
   }
 
   root.ACT = { init, step, fire, toss, hurt, BOX };
