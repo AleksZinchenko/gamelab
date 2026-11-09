@@ -1,0 +1,4 @@
+Use case: far background parallax band for a side-scrolling platformer level played high up on the rooftops of a snowy town at Christmas night.
+Subject: a sea of snowy steep rooftops seen from above roof height, stretching into the distance: many gables, chimneys with thin smoke, a church spire, a few tiny flat amber lit windows and attic windows. Hazy and low contrast, mostly dark desaturated blue with pale snow, simplified shapes, very little detail, no outline.
+Composition: a single horizontal band filling the lower 60% of the image; the roof skyline varies between 40% and 55% from the top; the left and right edges have the same height and density so the band tiles horizontally; the band continues to the bottom edge. Everything above the skyline is flat solid #FF00FF.
+Constraints: one band only, no sky, no moon, no stars, no people, no text.

@@ -1,0 +1,3 @@
+[
+ {"name": "pigeon_parts_sheet", "prompt": "art/prompts/pigeon_parts_sheet.txt", "ref": ["art/gen/pigeon_anchor.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"}
+]

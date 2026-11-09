@@ -1,0 +1,6 @@
+[
+ {"name": "roofs_sheet", "prompt": "art/prompts/roofs_sheet.txt", "ref": ["art/gen/house_tall.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "roofprops_sheet", "prompt": "art/prompts/roofprops_sheet.txt", "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "pigeon_anchor", "prompt": "art/prompts/pigeon_anchor.txt", "size": "1024x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "bg_roofs", "prompt": "art/prompts/bg_roofs.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"}
+]

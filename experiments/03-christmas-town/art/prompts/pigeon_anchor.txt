@@ -1,0 +1,4 @@
+Use case: character anchor for a cut-out animation rig of a small enemy in a side-scrolling platformer.
+Subject: a plump grey city pigeon from a gang that hates Christmas, comical not scary: blue-grey feathers, iridescent green-violet neck, orange eye with a grumpy squint, short pink legs, and a tiny knitted GREY scarf around its neck (the gang's sign). Standing on its feet in strict side view facing right, wings folded but with the near wing clearly readable as a separate shape on the body, tail feathers visible.
+Composition: one bird centred, filling 70% of the canvas height, feet on a line at 90% height.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no text.

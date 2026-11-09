@@ -1,0 +1,9 @@
+Use case: part sheet for a cut-out animation rig of a small flying enemy in a side-scrolling platformer.
+Image 2 is the approved character: follow its design, colours, proportions and pixel size exactly; this is the SAME pigeon split into parts.
+Subject: 4 separate parts of the grumpy grey pigeon with the tiny grey scarf, in the same strict side view facing right as Image 2, each complete including the areas normally hidden by other parts:
+(1) the body WITHOUT any wings: head with the grumpy orange eye and beak, green-violet neck with the grey scarf, round grey body, tail feathers, short pink legs; the place where the wing attaches shows plain body feathers;
+(2) the near wing FOLDED, as it lies on the body when the bird stands;
+(3) the near wing SPREAD fully open as in flight, seen from the side, long flight feathers fanned out, the wing root (shoulder) at the bottom-left end;
+(4) the far wing spread fully open, the same shape as (3) but slightly darker.
+Composition: the four parts in one row, all at the same scale as each other and as Image 2, with wide empty gaps; nothing touching.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no text.
