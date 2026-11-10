@@ -1,0 +1,4 @@
+Use case: far background parallax band for the top of a tall clock tower in a side-scrolling platformer at Christmas night (the boss chase runs along the tower roof).
+Subject: the snowy half-timbered town seen from very high above: a sea of small snowy roofs far below with many tiny flat amber lit windows, thin chimney smoke, a frozen river with a mill far away, snowy hills on the horizon. Hazy and low contrast, dark desaturated blue with pale snow, very little detail, no outline.
+Composition: a single horizontal band filling the lower 60% of the image; the horizon of hills at about 45% from the top; the left and right edges match so the band tiles horizontally; the band continues to the bottom edge. Everything above the horizon is flat solid #FF00FF.
+Constraints: one band only, no sky, no moon, no stars, no people, no text.

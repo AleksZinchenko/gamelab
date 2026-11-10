@@ -1,0 +1,4 @@
+Use case: sheet of belfry pieces for the boss arena at the top of a town-hall clock tower in a side-view platformer, Christmas night.
+Subject: 5 separate pieces in strict side view: (1) a big old BRONZE CHURCH BELL hanging from a heavy wooden yoke beam, greenish patina, a clapper visible inside, a few icicles on the rim; (2) a wide wooden belfry floor made of thick planks on a beam, seen from the side, a long flat walking surface, snow drifted in at the ends; (3) a wooden roof truss (A-frame of beams with a crossbar) that holds the bell; (4) a steep copper-green tower spire roof seen from the side, with a long flat narrow walkway along its base with a low iron railing, snow on the ledges; (5) a coiled thick bell rope.
+Composition: two rows, every piece centred in its own area with wide empty gaps; the floor the widest piece; the bell about as tall as two children.
+Constraints: background flat solid #FF00FF; no sky, no people, no text.

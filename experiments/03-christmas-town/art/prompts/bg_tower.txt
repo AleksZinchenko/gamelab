@@ -1,0 +1,4 @@
+Use case: background for a VERTICAL side-view platformer level that climbs up inside a tall old town-hall clock tower at Christmas night.
+Subject: the inside wall of the tower seen straight on: old red-brown brick masonry, heavy dark wooden beams and diagonal braces, iron brackets, a few narrow arched windows with cold blue moonlight and falling snow outside, faint silhouettes of huge gears deep in the darkness, cobwebs, a hanging old lantern. Dark and moody, low contrast, mostly deep warm brown and night blue, simplified shapes, no outline, nothing in the foreground.
+Composition: fills the whole frame edge to edge; the TOP and BOTTOM edges match exactly (same bricks and beams continue) so the image tiles vertically; the left and right edges are plain brick wall.
+Constraints: no floor, no ground, no people, no text, no numbers, no clock face with numerals.

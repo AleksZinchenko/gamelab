@@ -1,0 +1,5 @@
+Use case: character anchor for a cut-out animation rig of the BOSS in a side-scrolling platformer.
+Image 2 shows a member of his gang: match its style, outline, pixel size and the knitted grey scarf (the gang's sign).
+Subject: "Mr. Burchak" (Mr. Grumble), the grumpy old leader of a gang that hates Christmas, comical not scary: a tall bony old man, about one and a half times as tall as the thief of Image 2, bald head with wild white tufts of hair over the ears, huge bushy white eyebrows in a deep frown, a long red nose, a small downturned mouth, a long dark plum-purple coat with brass buttons, a very long knitted GREY scarf wrapped twice around his neck, striped grey trousers, big black boots, fingerless grey gloves. Full body, facing right in a slight 3/4 side view, standing in a neutral rig pose: feet under the hips with a clear gap between the legs, arms hanging slightly away from the body with a clear gap between each arm and the torso, hands empty.
+Composition: one character centred, filling 90% of the canvas height, feet on a line at 95% height.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no star, no sack, no text.

@@ -1,0 +1,7 @@
+[
+ {"name": "bg_tower", "prompt": "art/prompts/bg_tower.txt", "size": "1024x1536", "alpha": "none"},
+ {"name": "clockwork_sheet", "prompt": "art/prompts/clockwork_sheet.txt", "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "belfry_sheet", "prompt": "art/prompts/belfry_sheet.txt", "ref": ["art/gen/house_tall.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "bg_towertop", "prompt": "art/prompts/bg_towertop.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "burchak_anchor", "prompt": "art/prompts/burchak_anchor.txt", "ref": ["art/gen/thief_anchor.png"], "size": "1024x1536", "alpha": "key", "key": "ff00ff"}
+]
