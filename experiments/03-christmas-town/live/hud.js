@@ -114,10 +114,11 @@
     for (const e of ST.ev) { const a = GT - e.t; if (a < 0 || a > 0.8 || (e.k !== 'gift' && e.k !== 'ornament')) continue;
       const q = SS(0, 1, a / 0.8), x0 = e.x - ST.cam, y0 = e.y - ST.camY, tx = e.k === 'gift' ? gx + 32 + e.i * 74 : ox + 18 + e.i * 46, ty = e.k === 'gift' ? 62 : 136;
       const cx = (x0 + tx) / 2, cy = Math.min(y0, ty) - 200, px = (1 - q) ** 2 * x0 + 2 * (1 - q) * q * cx + q * q * tx, py = (1 - q) ** 2 * y0 + 2 * (1 - q) * q * cy + q * q * ty;
-      const n = e.k === 'gift' ? ['gift_red', 'gift_green', 'star'][e.i] : ['orn_red', 'orn_gold', 'orn_blue'][LV.ORNAMENTS[e.i][2]];
+      const n = e.k === 'gift' ? GF[e.i] : ['orn_red', 'orn_gold', 'orn_blue'][LV.ORNAMENTS[e.i][2]];
       L.glow(px, py, 60, [1, 0.8, 0.4], 0.6, 3); icon(n, px, py, 60 - 10 * q); }
-    // підказка на старті (зникає сама)
-    const ht = ST.t; if (ht < 6 && UI.mode === 'play') { const a = SS(0, 0.5, ht) * (1 - SS(5, 6, ht)), s = SIM.HINT, w = L.labelW('hint', s, { size: 28 }) + 40;
+    // підказка на старті (зникає сама): спершу керування, далі (якщо є) — підказка самого рівня
+    const ht0 = ST.t, lvh = LV.HINT && ht0 >= 6, ht = lvh ? ht0 - 6 : ht0;
+    if (ht < 6 && UI.mode === 'play') { const a = SS(0, 0.5, ht) * (1 - SS(5, 6, ht)), s = lvh ? LV.HINT : SIM.HINT, w = L.labelW('hint', s, { size: 28 }) + 40;
       L.rrect(W / 2 - w / 2, H - 92, w, 54, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.75 * a); L.uiBox('hint', W / 2 - w / 2, H - 92, w, 54, 4);
       L.label('hint', s, W / 2, H - 65, { size: 28, col: CREAM, out: INK, al: 0.5, a }); }
   }

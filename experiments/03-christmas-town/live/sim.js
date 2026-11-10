@@ -5,12 +5,14 @@
   const LV = root.LEVEL || require('./level.js'), ACT = root.ACT || require('./actors.js');
   if (!root.LEVELS.hub && typeof require !== 'undefined') require('./hub.js');
   if (!root.LEVELS.roofs && typeof require !== 'undefined') require('./roofs.js');   // у node площу підтягуємо самі (у браузері — index.html)
+  if (!root.LEVELS.river && typeof require !== 'undefined') require('./river.js');
   const DT = 1 / 120, L = 16.0;                  // крок симуляції і довжина циклу демо (с)
   const VIEW = { W: 1920, H: 1080 }, GY = LV.GY;
   // «Відчуття» руху (px, с). JUMP дає стрибок ~360 px (2.2 зросту героя) — щоб діставати навіси й підвіконня.
   // COYOTE — «час койота»: ще 0.1 с після краю можна стрибнути; BUFFER — натиснув трохи раніше приземлення — спрацює.
   const K = { G: 2700, GF: 3300, MAXF: 1600, RUN: 430, ACC_G: 3200, ACC_A: 2100, JUMP: 1390, COYOTE: 0.10, BUFFER: 0.12, CUT: 480, APEX: 170,
-    CLIMB: 300, ACC_SLIP: 700, SLIDE: 1500, MAXSLIDE: 720 };   // драбина (px/с), ковзкий скат: слабке гальмування, сповзання
+    CLIMB: 300, ACC_SLIP: 700, SLIDE: 1500, MAXSLIDE: 720,      // драбина (px/с), ковзкий скат: слабке гальмування, сповзання
+    ACC_ICE: 520 };                                              // лід: розганяєшся й гальмуєш у ~6 разів повільніше, ніж на снігу
   const HERO_H = 160;                            // зріст героя на екрані (px)
   const HINT = 'стрілки / WASD — біг, Пробіл — стрибок, X або клік — рогатка, C — хлопавка, Esc — пауза';
 
@@ -18,7 +20,11 @@
   // Кожна платформа — ламана [x, y ніг]; односторонні: на них стають згори, знизу пролітаєш крізь (як у більшості платформерів).
   // SURF будується з даних АКТИВНОГО рівня; SIM.use(...) перебудовує його (масив той самий — посилання в інших модулях живі).
   const SURF = [];
-  function buildSurf() { SURF.length = 0; SURF.push({ id: 'ground', pts: [[-600, GY], [LV.LEN + 600, GY]] });
+  function buildSurf() { SURF.length = 0;
+  // земля: суцільна смуга — або (річка) шматки берега й льоду між протоками; gnd — «це земля» (на ній не малюємо сніжного краю)
+  (LV.GROUND || [[-600, LV.LEN + 600, 0]]).forEach(([x0, x1, ice], i) => SURF.push({ id: i ? 'ground' + i : 'ground', gnd: true, ice: !!ice, pts: [[x0, GY], [x1, GY]] }));
+  // рухомі платформи (крижини, дошки колеса): лінії тут лише «заготовки» — їх щокроку ставить на місце правило рівня
+  (LV.MOVERS || []).forEach((m) => SURF.push({ id: m.id, mover: true, roof: true, ice: !!m.ice, pts: [[0, 1e5], [1, 1e5]] }));
   LV.HOUSES.forEach((h, hi) => { const [tw, th] = LV.TEX[h.tex], k = h.k || LV.HK;          // k — свій масштаб будинку (ратуша менша)
     const X = (lx) => h.x + (h.flip ? tw - lx : lx) * k, Y = (ly) => (h.base || GY) - (th - ly) * k;
     LV.LEDGES[h.tex].forEach(([x0, y0, x1, y1], li) => { const a = [X(x0), Y(y0)], b = [X(x1), Y(y1)];
@@ -118,10 +124,13 @@
     const gs = S.ground && LV.SLIP ? byId(S.ground) : null, m = gs ? slopeAt(gs, S.x) : 0, slip = Math.abs(m) > 0.35, steep = Math.abs(m) > 1.2;
     // біжиш угору помірним скатом — повільніше, і сповзання слабшає (інакше вибігти неможливо); крутий — лише з'їжджаєш
     const upHill = slip && !steep && dir === -Math.sign(m);
-    const acc = S.ground ? (slip ? (upHill ? K.ACC_G : K.ACC_SLIP) : K.ACC_G) : K.ACC_A, target = steep ? S.vx : dir * K.RUN * (upHill ? 0.7 : 1);
+    const ice = S.ground && LV.GROUND ? (byId(S.ground) || {}).ice : false;            // лід (річка): інерція — ковзаєш далі
+    const acc = S.ground ? (ice ? K.ACC_ICE : slip ? (upHill ? K.ACC_G : K.ACC_SLIP) : K.ACC_G) : K.ACC_A, target = steep ? S.vx : dir * K.RUN * (upHill ? 0.7 : 1);
     if (!S.climb) S.vx = S.vx < target ? Math.min(target, S.vx + acc * DT) : Math.max(target, S.vx - acc * DT);
     if (slip) { S.vx += Math.sign(m) * (steep ? K.SLIDE * 1.6 : K.SLIDE * Math.abs(m) * (upHill ? 0.25 : 1)) * DT; S.vx = Math.max(-K.MAXSLIDE, Math.min(K.MAXSLIDE, S.vx));
       if (Math.floor(t * 12) !== Math.floor((t - DT) * 12)) S.ev.push({ k: 'slide', t, x: S.x, y: S.y, d: Math.sign(m) }); }
+    // на льоду, коли гальмуєш або розвертаєшся, — шурхіт ковзанів і сніжні бризки з-під ніг (та сама подія, що й на скаті)
+    if (ice && Math.abs(S.vx) > 150 && dir !== Math.sign(S.vx) && Math.floor(t * 12) !== Math.floor((t - DT) * 12)) S.ev.push({ k: 'slide', t, x: S.x, y: S.y, d: Math.sign(S.vx) });
     // вітер у проміжках між дахами: зносить у польоті (сніжинки там летять убік — попередження)
     if (!S.ground && !S.climb && LV.WIND) for (const w of LV.WIND) if (S.x > w.x0 && S.x < w.x1) S.vx += w.f * (0.7 + 0.3 * Math.sin(t * 1.7)) * DT;
     const py = S.y;
@@ -172,6 +181,7 @@
     S.camV += (30 * (ctg - S.cam) - 11 * S.camV) * DT; S.cam += S.camV * DT;
     // CAMY — на якій висоті екрана тримати героя (вулиця — 820, біля низу; дахи — вище, щоб бачити, що внизу)
     const cyo = LV.CAMY || 820; let cy = S.camY; if (S.ground || S.climb || S.y - S.camY > 1000 || S.y - S.camY < 330) cy = Math.min(0, S.y - cyo);
+    if (LV.CAMMIN !== undefined) cy = Math.max(LV.CAMMIN, cy);            // річка: камера не задирається — земля й вода завжди в кадрі
     S.camYV += (22 * (cy - S.camY) - 9.4 * S.camYV) * DT; S.camY += S.camYV * DT;
     if (S.ev.length > 64) S.ev.splice(0, S.ev.length - 64);
     S.t = t; S.steps++;

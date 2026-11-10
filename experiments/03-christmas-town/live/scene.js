@@ -15,7 +15,7 @@
   const CAP = [0.93, 0.93, 0.99], CAP_SH = [0.55, 0.61, 0.86], ICE = [0.74, 0.86, 1.0];
   const seedOf = (id) => { let h = 0; for (const c of id) h = h * 31 + c.charCodeAt(0); return h % 997; };
   function caps(X, Y, onScreen) {
-    for (const s of SIM.SURF) { if (s.id === 'ground') continue; const p = s.pts, sd = seedOf(s.id);
+    for (const s of SIM.SURF) { if (s.gnd) continue; const p = s.pts, sd = seedOf(s.id);                  // землю не обводимо
       for (let i = 0; i < p.length - 1; i++) { const [x0, y0] = p[i], [x1, y1] = p[i + 1]; if (!onScreen((x0 + x1) / 2, Math.abs(x1 - x0) + 100)) continue;
         const len = Math.hypot(x1 - x0, y1 - y0), a = Math.atan2(y1 - y0, x1 - x0), sx = Math.round(x0 + X(1)), sy = Math.round(y0 + Y(1));
         // смуга: синя тінь знизу, біла шапка зверху (верх — рівно під ногами героя); краї трохи звисають
@@ -31,7 +31,7 @@
   const REACH = 370;
   function glints(ST, t, X, Y, onScreen) {
     if (!ST.ground || ST.faint >= 0 || ST.exit) return;
-    for (const s of SIM.SURF) { if (s.id === 'ground' || s.id === ST.ground) continue; const p = s.pts, sd = seedOf(s.id);
+    for (const s of SIM.SURF) { if (s.gnd || s.id === ST.ground) continue; const p = s.pts, sd = seedOf(s.id);
       for (let i = 0; i < p.length - 1; i++) { const [x0, y0] = p[i], [x1, y1] = p[i + 1]; if (!onScreen((x0 + x1) / 2, Math.abs(x1 - x0))) continue;
         const cx = Math.max(x0, Math.min(x1, ST.x)), cy = y0 + (y1 - y0) * (cx - x0) / (x1 - x0 || 1), dy = ST.y - cy, dx = Math.abs(cx - ST.x);
         const k = SS(30, 70, dy) * (1 - SS(REACH - 40, REACH, dy)) * (1 - SS(260, 430, dx)); if (k <= 0.01) continue;
@@ -53,6 +53,7 @@
     townhall: [[0.125, 0.66], [0.305, 0.66], [0.494, 0.66], [0.69, 0.66], [0.853, 0.66]],
     roof_gable: [[0.5, 0.42], [0.5, 0.8]], roof_flat: [[0.3, 0.37], [0.71, 0.37], [0.3, 0.76], [0.71, 0.76]],
     roof_slope: [[0.53, 0.82], [0.62, 0.42]], roof_tower: [[0.5, 0.45]],
+    mill: [[0.55, 0.23], [0.55, 0.4], [0.55, 0.6], [0.73, 0.82]],
   };
   // темні вікна, що спалахують у фіналі (мансарди ратуші, вікна аркади)
   const WIN_DARK = { townhall: [[0.153, 0.49], [0.296, 0.49], [0.69, 0.49], [0.845, 0.49], [0.22, 0.89], [0.78, 0.89]] };
@@ -85,7 +86,7 @@
     L.fog(470, 260, [0.0018, 0.010, 0.52, 0.30], [0.25, 0.32, 0.52], 1, t, 0.2);
     // ряд будинків за площею (паралакс 0.4)
     // менший масштаб і більше серпанку, ніж на ігровому плані, — тоді око читає «це далі, за площею»
-    const BM = LV.BGMID ? { n: LV.BGMID, w: 1600, y: -110 } : { n: 'bg_mid', w: 1440, y: 260 };          // дахи: «море дахів» унизу
+    const BM = LV.BGMID ? { n: LV.BGMID, w: LV.BGW || 1600, y: LV.BGY === undefined ? -110 : LV.BGY } : { n: 'bg_mid', w: 1440, y: 260 };   // дахи: «море дахів»; річка: дальній берег
     for (let k = -1; k < 5; k++) L.sprite(BM.n, k * BM.w + ((X(0.4) % BM.w) + BM.w) % BM.w - BM.w, BM.y + Y(0.4), { w: BM.w,
       u: { grade: [0.7, 0.62, 0.32, 0.8], haze: [0.10, 0.14, 0.30], lod: 0.6 } });
     L.fog(700, 260, [0.003, 0.03, 0.45, 0.4], [0.22, 0.28, 0.45], 2, t, 0.2);
@@ -105,9 +106,10 @@
     for (const p of LV.PROPS) { if (!onScreen(p.x)) continue; const w = L.hsz(p.tex, p.h);
       L.sprite(p.tex, Math.round(p.x - w / 2 + X(1)), Math.round((p.y || GY) - p.h + 6 + Y(1)), { h: p.h }); }
     ROOFDRAW.front(ST, GT, t, X, Y, onScreen);                               // драбини, місточки, пласти, дим (дахи)
+    if (LV.RIVER) { RIVERDRAW.ground(ST, GT, t, X, Y, camX); RIVERDRAW.movers(ST, GT, t, X, Y, onScreen); }   // річка: берег, лід, вода, крижини, колесо
     caps(X, Y, onScreen);                                                    // сніжні краї платформ — поверх будинків і реквізиту
     // земля: смуга бруківки під снігом, повторюється
-    { const g = A('ground'), k = 0.8, gw = g.w * k, walk = (g.walk || 14) * k, x0 = Math.floor(camX / gw) * gw - gw;
+    if (!LV.RIVER) { const g = A('ground'), k = 0.8, gw = g.w * k, walk = (g.walk || 14) * k, x0 = Math.floor(camX / gw) * gw - gw;
       for (let x = x0; x < camX + W + gw; x += gw - 1) L.sprite('ground', Math.round(x + X(1)), Math.round(GY - walk + Y(1)), { w: gw, h: g.h * k });
       L.solid(0, GY - walk + g.h * k - 4 + Y(1), W, 400, [0.05, 0.06, 0.1]); }
     if (LV.HUB) PLAZA.tree(ST, GT, t, X, Y);                                 // ялинка посеред площі — перед ратушею, за героєм
@@ -117,8 +119,10 @@
     ST.th.forEach((e, i) => onScreen(e.x) && DRAW.enemy('thief', e, i, ST, GT, t, X, Y));
     ST.bu.forEach((e, i) => onScreen(e.x) && DRAW.enemy('bully', e, i, ST, GT, t, X, Y));
     ROOFDRAW.pigeons(ST, GT, t, X, Y, onScreen);
+    (ST.sn || []).forEach((e, i) => onScreen(e.x) && DRAW.enemy('snuffer', e, i, ST, GT, t, X, Y));   // гасильники (річка)
     L.inked(() => DRAW.hero(ST, GT, t, X, Y), { r: 2, n: 6, col: [0.04, 0.04, 0.07], dy: 0 });
     FX.events(ST, GT, t, X, Y);
+    if (LV.RIVER) { RIVERDRAW.smoke(ST, GT, t, X, Y, onScreen); RIVERDRAW.dark(ST, GT, t, X, Y, onScreen); }   // ніч: кадр × карта світла
 
     // ===================== світло: вікна, ліхтарі (додається поверх — «світить») =====================
     const fest = LV.HUB ? PLAZA.lit(ST, GT) : 0;                             // фінал: у всіх вікнах світліше, темні — загоряються

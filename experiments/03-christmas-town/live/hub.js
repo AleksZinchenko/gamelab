@@ -11,10 +11,11 @@
   // Прикраси висять під снігом кожного ярусу — там темна хвоя, кулька на ній читається.
   const TREE = { x: 1500, h: 800, top: [0.5, 0.035],
     orn: [[0.40, 0.30], [0.62, 0.42], [0.30, 0.55], [0.70, 0.66], [0.45, 0.80],             // 5 прикрас Пекарської
-      [0.44, 0.21], [0.60, 0.31], [0.48, 0.45], [0.38, 0.66], [0.78, 0.70]],                   // 5 прикрас з дахів
+      [0.44, 0.21], [0.60, 0.31], [0.48, 0.45], [0.38, 0.66], [0.78, 0.70],                    // 5 прикрас з дахів
+      [0.53, 0.36], [0.26, 0.47], [0.63, 0.55], [0.27, 0.75], [0.60, 0.78]],                   // 5 прикрас з річки
     candy: [[0.56, 0.19], [0.36, 0.43], [0.73, 0.52], [0.22, 0.67], [0.55, 0.69], [0.84, 0.80], [0.16, 0.82], [0.64, 0.86]],
     tiers: [0.17, 0.27, 0.38, 0.50, 0.63, 0.76],                                              // лінії гірлянди
-    gifts: [-175, 180, -265, 270] };                                                          // подарунки під ялинкою (зсув x): вулиця, дахи
+    gifts: [-175, 180, -265, 270, -90, 92, 2] };                                              // подарунки під ялинкою (зсув x): вулиця, дахи, річка
   TREE.w = TREE.h * LV0.TEX.tree_square[0] / LV0.TEX.tree_square[1];
   TREE.x0 = TREE.x - TREE.w / 2; TREE.y0 = GY - TREE.h + 8;                                  // лівий верхній кут спрайта (+8 — «вкопана»)
   TREE.pt = (u, v) => [TREE.x0 + u * TREE.w, TREE.y0 + v * TREE.h];
@@ -23,9 +24,10 @@
   const slotPos = (k, i) => k === 'orn' ? TREE.pt(...TREE.orn[i]) : k === 'candy' ? TREE.pt(...TREE.candy[i])
     : k === 'gift' ? [TREE.x + TREE.gifts[i], GY - 34] : TREE.pt(...TREE.top);
   const N_CANDY = TREE.candy.length;
-  // з якого рівня кожне місце на ялинці: прикраси 0–4 — вулиця, 5–9 — дахи; подарунки 0–1 — вулиця, 2–3 — дахи
-  const OFF = { street: { orn: 0, gift: 0 }, roofs: { orn: 5, gift: 2 } };
-  TREE.ornKind = (slot) => { const lv = slot < 5 ? 'street' : 'roofs', L = root.LEVELS[lv], q = L && L.ORNAMENTS[slot - OFF[lv].orn]; return q ? q[2] : 0; };
+  // з якого рівня кожне місце на ялинці: прикраси 0–4 — вулиця, 5–9 — дахи, 10–14 — річка;
+  // подарунки 0–1 — вулиця, 2–3 — дахи, 4–6 — річка
+  const OFF = { street: { orn: 0, gift: 0 }, roofs: { orn: 5, gift: 2 }, river: { orn: 10, gift: 4 } };
+  TREE.ornKind = (slot) => { const lv = slot < 5 ? 'street' : slot < 10 ? 'roofs' : 'river', L = root.LEVELS[lv], q = L && L.ORNAMENTS[slot - OFF[lv].orn]; return q ? q[2] : 0; };
 
   // ---------------- ратуша і брами ----------------
   const TH = { x: 1820, k: 0.66 };            // ратуша: лівий край і масштаб (менша за будинки вулиці — «стоїть у глибині площі»)
@@ -36,7 +38,7 @@
     { x: 190, to: 'street', name: 'Пекарська вулиця', dir: -1 },
     { x: TH.x + TH.w / 2, to: null, name: 'Ратушна вежа' },
     { x: 3070, to: 'roofs', name: 'Дахи й димарі', dir: 1 },
-    { x: 3790, to: null, name: 'Замерзла річка', dir: 1 },
+    { x: 3790, to: 'river', name: 'Замерзла річка', dir: 1 },
   ];
 
   // ---------------- прогрес (PROG): що вже висить на ялинці і що лежить у торбі ----------------
@@ -44,7 +46,9 @@
   const KEY = 'yalynka.prog.v2';
   const blank = () => ({ orn: TREE.orn.map(() => 0), gifts: TREE.gifts.map(() => 0), star: 0, candy: 0, best: 0, bag: { orn: [], gifts: [], star: 0 }, lit: 0 });
   const PROG = { d: blank(), last: '' };
-  PROG.load = () => { try { const s = root.localStorage && localStorage.getItem(KEY); if (s) PROG.d = Object.assign(blank(), JSON.parse(s)); } catch (e) {} return PROG.d; };
+  PROG.load = () => { try { const s = root.localStorage && localStorage.getItem(KEY); if (s) PROG.d = Object.assign(blank(), JSON.parse(s)); } catch (e) {}
+    // старе збереження (до річки) коротше — доповнюємо порожніми місцями, щоб нові слоти ялинки теж були
+    PROG.d.orn = TREE.orn.map((_, i) => PROG.d.orn[i] || 0); PROG.d.gifts = TREE.gifts.map((_, i) => PROG.d.gifts[i] || 0); return PROG.d; };
   PROG.write = () => { const s = JSON.stringify(PROG.d); if (s === PROG.last) return; PROG.last = s;
     try { if (root.localStorage) localStorage.setItem(KEY, s); } catch (e) {} };
   PROG.reset = () => { PROG.d = blank(); PROG.write(); };
@@ -52,7 +56,8 @@
   // Рівень пройдено: усе зібране, чого ще нема ні на ялинці, ні в торбі, — кладемо в торбу (номери місць на ялинці).
   PROG.bank = (S, lv = 'street') => { const d = PROG.d, b = d.bag, o = OFF[lv] || OFF.street;
     S.orn.forEach((g, i) => { const k = o.orn + i; if (g >= 0 && !d.orn[k] && !b.orn.includes(k)) b.orn.push(k); });
-    [0, 1].forEach((i) => { const k = o.gift + i; if (S.gifts[i] >= 0 && !d.gifts[k] && !b.gifts.includes(k)) b.gifts.push(k); });
+    // вулиця: подарунки 0–1 (3-й «подарунок» — зірка, нижче); інші рівні — усі їхні подарунки
+    (lv === 'street' ? [0, 1] : S.gifts.map((_, i) => i)).forEach((i) => { const k = o.gift + i; if (S.gifts[i] >= 0 && !d.gifts[k] && !b.gifts.includes(k)) b.gifts.push(k); });
     if (lv === 'street' && S.gifts[2] >= 0 && !d.star) b.star = 1;                           // третій «подарунок» вулиці — зірка
     if (lv === 'street') d.best = Math.max(d.best, S.sw); PROG.write(); };
   // Площа щокадру повертає свій стан: що вже долетіло до ялинки (летить — теж рахуємо), що лишилось у торбі, чи сяє.

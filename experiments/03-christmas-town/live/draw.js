@@ -120,6 +120,9 @@
       ARM: { split: 0.47, root: [0.55, 0.07], joint: [0.55, 0.47] }, LEG: { split: 0.47, root: [0.45, 0.04], joint: [0.45, 0.47] }, stride: 230 },
     bully: { k: 0.312, sh: [[0.11, 0.56], [0.85, 0.52]], hip: [[0.33, 0.93], [0.66, 0.93]], pv: 0.95,
       ARM: { split: 0.48, root: [0.55, 0.08], joint: [0.55, 0.48] }, LEG: { split: 0.45, root: [0.4, 0.05], joint: [0.4, 0.45] }, stride: 170 },
+    // гасильник (річка): довгий плащ, циліндр; плечі й стегна виміряно сіткою frames/g_snuf.png
+    snuffer: { k: 0.23, sh: [[0.14, 0.47], [0.78, 0.45]], hip: [[0.35, 0.93], [0.62, 0.93]], pv: 0.95,
+      ARM: { split: 0.47, root: [0.5, 0.06], joint: [0.5, 0.47] }, LEG: { split: 0.47, root: [0.45, 0.04], joint: [0.45, 0.47] }, stride: 200 },
   };
   // пози: [дальнє стегно, коліно, ближнє стегно, коліно, дальня рука, лікоть, ближня рука, лікоть, нахил тіла°, присідання]
   const EPO = {
@@ -127,6 +130,9 @@
       cower: [-50, 80, -40, 70, -150, -60, -160, -50, 14, 0.82], hit: [20, 30, -10, 20, 60, -30, 50, -40, -16, 0.95], sack: [0, 0, 0, 0, 165, -70, 0, 0, 0, 1] },
     bully: { idle: [-10, 6, 12, 6, 14, -10, -12, -10, 0, 1], hit: [16, 24, -8, 18, 50, -30, 40, -30, -12, 0.96],
       wind: [-10, 6, 12, 6, 30, -20, 150, -50, -8, 0.98], fling: [-14, 10, 16, 10, 20, -20, -140, -10, 10, 1.0] },
+    // гасильник: ближня рука несе палицю; snuff — рука вгору-вперед, палиця дзвоником накриває ліхтар
+    snuffer: { idle: [-4, 6, 6, 4, 6, -8, -40, -60, 2, 1], snuff: [-6, 8, 10, 6, 10, -10, -150, -14, -6, 1.02],
+      hit: [16, 24, -8, 18, 50, -30, 30, -40, -12, 0.96] },
   };
   // крок: ноги навпереміну, руки протифазою; amp — розмах ніг (крадькома — дрібно, втеча — широко), arms — розмах рук
   const gait = (p, amp, arms) => { const s = Math.sin(p), c = Math.cos(p);
@@ -169,6 +175,11 @@
       if (e.st === 'cower') Q = L.lerpP(Q, P.cower, L.SS(0, 0.2, a));
       if (!gone && e.st !== 'cower') { Q = Q.slice(); Q[4] = P.sack[4] + 6 * Math.sin(ph); Q[5] = P.sack[5]; }   // дальня рука тримає мішок на плечі
       if (gone) Q = gait(ph, 1.3, 1.2);
+    } else if (kind === 'snuffer') {
+      // повільна похмура хода; ближня рука тримає палицю (лише дальня махає); snuff — підняти палицю до ліхтаря
+      const walk = Math.min(1, sp / 70); Q = L.lerpP(P.idle, gait(ph, gone ? 1.2 : 0.7, gone ? 1 : 0.5), walk).slice();
+      if (!gone) { Q[6] = P.idle[6] + 4 * Math.sin(ph); Q[7] = P.idle[7]; }
+      if (e.st === 'snuff') Q = L.lerpP(Q, P.snuff, L.SS(0, 0.35, a));
     } else {
       const walk = Math.min(1, sp / 120); Q = L.lerpP(P.idle, gait(ph, 1.1, 1), walk).slice();
       Q[9] *= 1 + 0.02 * Math.sin(t * 2.4 + i); Q[6] += 4 * Math.sin(t * 2.4 + i);     // важке дихання
@@ -179,10 +190,18 @@
     const x = Math.round(e.x + X(1) + (e.st === 'cower' ? 2 * Math.sin(GT * 70) : 0)), y = Math.round((e.y || GY) + Y(1));   // своя висота (дахи)
     const fade = gone ? 1 - L.SS(1.6, 2.5, a) : 1, u = { alpha: fade, tint: hit ? [1, 0.5, 0.45, 0.55] : [1, 1, 1, 0] };
     if (!L.sp) L.shadow(x, (e.y || GY) + Y(1) + 3, kind === 'bully' ? 46 : 34, 7, 0.5 * fade);
+    const pole = kind === 'snuffer' && !gone;
     const extra = kind === 'thief' && !gone ? { behind: (sh) => { const s = 92;
       L.sprite('sack', 0, 0, { m: M.of(M.t(sh[0] - face * 8, sh[1] + 6), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s, h: s, pivot: [s / 2, s * 0.25], flip: face < 0, u }); } } : null;
     const J = puppet(kind, Q, x, y, face, u, extra);
     L.joint(kind + i, 'hand', J.hand);
+    // палиця-гасильник у ближній кисті: зазвичай нахилена назад через плече; під час гасіння дзвоник тягнеться до скла ліхтаря
+    if (pole) { const ph2 = 300, pw2 = L.hsz('snuffer_pole', ph2), hold = 0.55;
+      // r — поворот за годинниковою від вертикалі «вгору»: верх палиці дивиться в (sin r, −cos r)
+      let r = -face * 0.35;                                                               // несе: верх нахилений назад
+      if (e.st === 'snuff' && e.tg >= 0) { const lx = LV.LAMPS[e.tg] + X(1), ly = GY - LV.LAMP_H + 60 + Y(1);
+        r += (Math.atan2(lx - J.hand[0], -(ly - J.hand[1])) - r) * L.SS(0.1, 0.5, a); }  // повертає дзвоник до скла ліхтаря
+      L.sprite('snuffer_pole', 0, 0, { m: M.of(M.t(J.hand[0], J.hand[1]), M.r(r)), w: pw2, h: ph2, pivot: [pw2 / 2, ph2 * hold], u }); }
     // вугілля в кисті під час замаху; у момент кидка далі летить снаряд із симуляції — з тієї ж точки
     if (kind === 'bully' && e.st === 'throw' && a < 0.45 && !L.sp) L.sprite('coal', J.hand[0] - 15, J.hand[1] - 15, { w: 30 });
     if (kind === 'bully' && e.st === 'throw' && a > 0.43 && a < 0.45) L.anchor('coal' + i, [e.x + face * 11 + X(1), (e.y || GY) - 192 + Y(1)], J.hand, 16);
@@ -203,7 +222,7 @@
       if ((t * 0.9 + i * 0.37) % 1 < 0.15) L.star(xx + 12, yy - 8, 14, [1, 1, 0.9], 1 - ((t * 0.9 + i * 0.37) % 1) / 0.15); });
     LV.AMMO.forEach(([x, kind, ay], i) => { if (ST.am[i] !== -1 || !onScreen(x)) return; const n = kind ? 'cracker' : 'branch', h = kind ? 56 : 62, gy = ay || GY;
       L.glow(x + X(1), gy - 50 + Y(1), 60, [0.8, 1, 0.7], 0.15, 3); L.sprite(n, x + X(1) - L.hsz(n, h) / 2, gy - h - 6 + Y(1) + 3 * Math.sin(t * 2 + i), { h }); });
-    for (const g of ST.drops) { if (ST.gifts[g.i] >= 0) continue; const n = GIFT[g.i], h = 64, xx = g.x + X(1), yy = g.y + Y(1);
+    for (const g of ST.drops) { if (ST.gifts[g.i] >= 0) continue; const n = (LV.GIFTS || GIFT)[g.i], h = 64, xx = g.x + X(1), yy = g.y + Y(1);
       L.glow(xx, yy - 30, 90, [1, 0.8, 0.45], 0.35 + 0.1 * Math.sin(t * 4), 3); L.sprite(n, xx - L.hsz(n, h) / 2, yy - h + (g.on ? 2 * Math.sin(t * 3) : 0), { h }); }
     for (const s of ST.loose) { const age = GT - s.t0, a = age > 5.5 ? (Math.floor(age * 10) % 2 ? 0.3 : 1) : 1;   // скоро зникне — блимає
       L.sprite(SWT[Math.floor(s.t0 * 10) % 4], s.x + X(1) - 18, s.y + Y(1) - 18, { h: 38, u: { alpha: a } }); }

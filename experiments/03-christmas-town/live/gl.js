@@ -90,6 +90,7 @@ vec2 scr(vec2 px){ return vec2(px.x / u_res.x, 1.0 - px.y / u_res.y); }   // scr
     gl.enable(gl.BLEND);
     if (mode === 'add') gl.blendFunc(gl.ONE, gl.ONE);
     else if (mode === 'screen') gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_COLOR);
+    else if (mode === 'mult') gl.blendFunc(gl.DST_COLOR, gl.ZERO);          // множення: кадр × карта світла (темрява на рівні річки)
     else if (mode === 'none') gl.disable(gl.BLEND);
     else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   };

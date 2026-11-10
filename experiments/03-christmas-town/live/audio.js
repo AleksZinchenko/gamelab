@@ -122,6 +122,12 @@
         case 'creak': play('wood', 0.5, 0.5, p); noise(0.5, 300, 900, 0.08, 'bandpass', 0, p); break;   // пласт зрушив з місця
         case 'whoosh2': play('whoosh', 0.45, 0.8, p); break;
         case 'slabsmash': play('land', 0.8, 0.7, p); noise(0.6, 1500, 200, 0.35, 'lowpass', 0, p, 0.7); break;
+        // ---- річка ----
+        case 'splash': noise(0.6, 900, 300, 0.45, 'lowpass', 0, p, 0.8); play('oops', 0.45, 1, p, 0.1); for (let j = 0; j < 5; j++) noise(0.08, 2200, 1200, 0.12, 'bandpass', 0.1 + j * 0.07, p, 2); break;
+        case 'raise': play('wood', 0.3, 0.8, p); break;                                             // гасильник підняв палицю
+        case 'snuff': play('plate', 0.3, 1.6, p); noise(0.5, 1200, 300, 0.12, 'lowpass', 0.05, p); break;   // «пух» — ліхтар погас
+        case 'snufferhit': play('punch' + (Math.floor(e.t * 3) % 2), 0.6, 0.95, p); break;
+        case 'snufferout': play('whoosh', 0.6, 0.8, p); play('punchh', 0.5, 0.85, p); [7, 4, 0].forEach((n, j) => chime(note(n, 1046), 0.08, 0.25 + j * 0.09, p)); break;
         // ---- площа ----
         case 'gate': play('ui_open', 0.5, 0.9, p); play('whoosh', 0.45, 0.8, p); break;
         case 'locked': play('wood', 0.6, 0.6, p); play('wood', 0.5, 0.55, p, 0.16); break;          // «тук-тук» у зачинену браму
