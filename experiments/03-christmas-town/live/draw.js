@@ -26,10 +26,24 @@
   const runPose = (p) => { const s = Math.sin(p), c = Math.cos(p);
     return [-34 * s - 2, 8 + 78 * Math.max(0, c) ** 1.4, 34 * s - 2, 8 + 78 * Math.max(0, -c) ** 1.4, -26 + 34 * s, -26 - 26 * Math.max(0, -s), 6 - 38 * s, -34 - 30 * Math.max(0, s), 7, 1 + 0.03 * Math.cos(2 * p)]; };
 
+  // лазіння по драбині: руки перехоплюють щаблі по черзі (одна витягнута вгору, друга зігнута біля обличчя),
+  // ноги ступають навпереміну — коли ліва рука вгорі, піднята права нога (так лазять люди: хрест-навхрест).
+  // p — фаза циклу; u/v — плавні «ваги» 0…1 для двох половин циклу.
+  const climbPose = (p) => { const s = Math.sin(p), u = (1 + s) / 2, v = 1 - u;
+    return [-18 - 52 * v, 22 + 78 * v,          // дальня нога: піднята (зігнута) у своїй половині циклу
+            -18 - 52 * u, 22 + 78 * u,          // ближня нога — у протифазі
+            -72 - 78 * u, -58 + 48 * u,         // дальня рука: u=1 — тягнеться вперед-угору майже пряма, u=0 — зігнута перед грудьми
+            -62 - 50 * v, -50 + 30 * v,         // ближня рука — у протифазі; вона росте з плеча за обличчям, тож тягнеться
+                                                // вперед, а не вгору, — інакше кисть проходить по лицю
+            3, 1]; };                           // тіло трохи нахилене до драбини
+
   // Плече ближньої руки (з неї стріляємо) — та сама формула, що й SIM.shoulder: постріл вилітає саме з кисті.
   D.heroPose = (ST, GT, t) => {
     let Q;
     if (ST.faint >= 0) return L.lerpP(PO.idle, PO.faint, L.SS(0, 0.4, GT - ST.faint));
+    // на драбині фаза береться з висоти: повний цикл — 120 px (чотири щаблі), стоїш — поза завмирає
+    if (ST.climb) { Q = climbPose(ST.y / 120 * 2 * Math.PI); const sh = GT - ST.hurtT;
+      return sh >= 0 && sh < 0.5 ? L.lerpP(Q, PO.hurt, Math.exp(-sh / 0.18) * 0.5) : Q; }
     if (ST.ground) { const idle = PO.idle.slice(); idle[9] = 1 + 0.018 * Math.sin(t * 2 * Math.PI / 1.9);   // дихання
       idle[6] += 3 * Math.sin(t * 2 * Math.PI / 1.9); Q = L.lerpP(idle, runPose(ST.dist / 150 * 2 * Math.PI), Math.min(1, Math.abs(ST.vx) / 260)); }
     else Q = ST.vy < 0 ? L.lerpP(PO.rise, PO.tuck, L.SS(-700, -80, ST.vy)) : L.lerpP(PO.tuck, PO.fall, L.SS(80, 700, ST.vy));
@@ -55,7 +69,8 @@
     // висота стегон = довша з ніг (ступня на землі); на бігу половину перепаду гасимо — інакше голова «скаче» (перевірка: ≤ 6 % зросту)
     const full = Lt + Ls, rr = Math.max(reachOf(fl1, fl2), reachOf(nl1, nl2)), runK = ST.ground ? Math.min(1, Math.abs(ST.vx) / 260) : 0;
     const reach = ST.faint >= 0 ? 20 + 30 * (1 - L.SS(0, 0.4, GT - ST.faint)) : rr + (full - rr) * 0.6 * runK - 3;
-    const hx = Math.round(ST.x + X(1)), hy = Math.round(ST.y + Y(1)), sy = sq, sx = 1 / Math.sqrt(sy);
+    // на драбині фігуру зсуваємо трохи назад, щоб кисті (вони попереду тіла) лягали на щаблі, а не в повітря
+    const hx = Math.round(ST.x + X(1) - (ST.climb ? ST.face * 22 : 0)), hy = Math.round(ST.y + Y(1)), sy = sq, sx = 1 / Math.sqrt(sy);
     // контактна тінь: менша, коли герой високо над землею
     if (!L.sp) { const gy = SIM.groundBelow(ST.x, ST.y); if (gy !== null) { const f = Math.max(0.2, 1 - (gy - ST.y) / 360); L.shadow(hx, gy + 3 + Y(1), 30 * f, 6 * f, 0.55 * f); } }
     const blink = ST.inv > 0 && ST.faint < 0 && Math.floor(GT * 14) % 2 === 0 ? 0.35 : 1;   // невразливість — блимання
