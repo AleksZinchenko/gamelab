@@ -1,0 +1,4 @@
+Use case: far background parallax band for a side-scrolling platformer level along a frozen river at Christmas night, outside a snowy town.
+Subject: the far snowy bank of a wide frozen river seen from the near bank: low rolling snowy hills, dark pine forest edges, bare willows with drooping branches, a few small cottages with tiny flat amber lit windows, a distant wooden footbridge, an old church tower far away. Hazy and low contrast, mostly dark desaturated blue with pale snow, simplified shapes, very little detail, no outline.
+Composition: a single horizontal band filling the lower 55% of the image; the skyline of hills and trees varies between 45% and 60% from the top; the left and right edges have the same height and density so the band tiles horizontally; the bottom 12% is the pale flat frozen river surface reaching the bottom edge. Everything above the skyline is flat solid #FF00FF.
+Constraints: one band only, no sky, no moon, no stars, no people, no text.

@@ -1,0 +1,6 @@
+[
+ {"name": "bg_river", "prompt": "art/prompts/bg_river.txt", "size": "1536x864", "alpha": "key", "key": "ff00ff"},
+ {"name": "river_sheet", "prompt": "art/prompts/river_sheet.txt", "ref": ["art/gen/house_tall.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "riverprops_sheet", "prompt": "art/prompts/riverprops_sheet.txt", "size": "1536x1024", "alpha": "key", "key": "ff00ff"},
+ {"name": "snuffer_anchor", "prompt": "art/prompts/snuffer_anchor.txt", "ref": ["art/gen/thief_anchor.png"], "size": "1024x1024", "alpha": "key", "key": "ff00ff"}
+]

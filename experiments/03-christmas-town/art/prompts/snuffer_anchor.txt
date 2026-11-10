@@ -1,0 +1,5 @@
+Use case: character anchor for a cut-out animation rig in a side-scrolling platformer (an enemy).
+Image 2 shows another member of the same gang: match its style, outline, pixel size, colours and the grey scarf (the gang's sign).
+Subject: the "lamp snuffer", a tall lanky gloomy member of a gang that hates Christmas, comical not scary: a long dark charcoal coat with big buttons, a battered tall grey top hat, a long pointy nose, sleepy grumpy eyes, a thin grey moustache, the knitted GREY scarf around the neck, black boots; about one head taller than the thief of Image 2. Full body, facing right in a slight 3/4 side view, standing in a neutral rig pose: feet under the hips with a clear gap between the legs, arms hanging slightly away from the body with a clear gap between each arm and the torso, hands empty.
+Composition: one character centred, filling 88% of the canvas height, feet on a line at 94% height.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no pole, no lamp, no text.

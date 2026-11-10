@@ -1,0 +1,3 @@
+[
+ {"name": "snuffer_parts_sheet", "prompt": "art/prompts/snuffer_parts_sheet.txt", "ref": ["art/gen/snuffer_anchor.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"}
+]
