@@ -90,7 +90,7 @@
       if (e.st === 'gone') { e.x += e.vx * dt; return; }
       e.face = Math.sign(dx) || e.face;
       if (e.st === 'hit') { if (t - e.stT > 0.5) { e.st = 'idle'; e.nextT = t + 1.2; } return; }
-      if (e.st === 'idle' && Math.abs(dx) < 1000 && S.faint < 0 && S.done < 0 && t > e.nextT) { e.st = 'throw'; e.stT = t; }
+      if (e.st === 'idle' && Math.abs(dx) < 1000 && Math.abs(S.y - e.y) < 800 && S.faint < 0 && S.done < 0 && t > e.nextT) { e.st = 'throw'; e.stT = t; }   // і по висоті недалеко (вежа)
       if (e.st === 'throw' && t - e.stT > 0.45) {                        // кидок на кінці замаху, з руки над головою
         const hx = e.x + e.face * 11, hy = e.y - 192,     /* кисть маріонетки в момент кидка (draw.js) */ T = 0.8 + Math.abs(dx) / 2200, ty = S.y - 70;
         S.shots.push({ k: 'coal', x: hx, y: hy, vx: (S.x - hx) / T, vy: (ty - hy - 0.5 * G_COAL * T * T) / T, t0: t, a: 0 });

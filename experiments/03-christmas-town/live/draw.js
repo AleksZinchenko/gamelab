@@ -123,6 +123,9 @@
     // гасильник (річка): довгий плащ, циліндр; плечі й стегна виміряно сіткою frames/g_snuf.png
     snuffer: { k: 0.23, sh: [[0.14, 0.47], [0.78, 0.45]], hip: [[0.35, 0.93], [0.62, 0.93]], pv: 0.95,
       ARM: { split: 0.47, root: [0.5, 0.06], joint: [0.5, 0.47] }, LEG: { split: 0.47, root: [0.45, 0.04], joint: [0.45, 0.47] }, stride: 200 },
+    // бос пан Бурчак (вежа): у півтора раза вищий за злодюжку
+    burchak: { k: 0.3, sh: [[0.1, 0.4], [0.8, 0.38]], hip: [[0.38, 0.93], [0.62, 0.93]], pv: 0.95,
+      ARM: { split: 0.47, root: [0.5, 0.06], joint: [0.5, 0.47] }, LEG: { split: 0.47, root: [0.45, 0.04], joint: [0.45, 0.47] }, stride: 260 },
   };
   // пози: [дальнє стегно, коліно, ближнє стегно, коліно, дальня рука, лікоть, ближня рука, лікоть, нахил тіла°, присідання]
   const EPO = {
@@ -133,6 +136,10 @@
     // гасильник: ближня рука несе палицю; snuff — рука вгору-вперед, палиця дзвоником накриває ліхтар
     snuffer: { idle: [-4, 6, 6, 4, 6, -8, -40, -60, 2, 1], snuff: [-6, 8, 10, 6, 10, -10, -150, -14, -6, 1.02],
       hit: [16, 24, -8, 18, 50, -30, 30, -40, -12, 0.96] },
+    // Бурчак: кидок як у кидайла; dizzy — руки обвисли, хитається; down — сів на дах
+    burchak: { idle: [-6, 6, 8, 6, 12, -10, -14, -12, 2, 1], hit: [16, 24, -8, 18, 50, -30, 40, -30, -14, 0.96],
+      wind: [-10, 6, 12, 6, 30, -20, 160, -50, -8, 0.98], fling: [-14, 10, 16, 10, 20, -20, -140, -10, 10, 1.0],
+      dizzy: [-8, 14, 10, 12, 30, -6, 24, -6, 0, 0.97], down: [-80, 90, -70, 85, 40, -30, 50, -30, -6, 0.85], carry: [0, 0, 0, 0, 165, -70, 0, 0, 0, 1] },
   };
   // крок: ноги навпереміну, руки протифазою; amp — розмах ніг (крадькома — дрібно, втеча — широко), arms — розмах рук
   const gait = (p, amp, arms) => { const s = Math.sin(p), c = Math.cos(p);
@@ -155,7 +162,9 @@
     limb('arm_f', shF, fa1, fa2, R.ARM, true);
     if (extra && extra.behind) extra.behind(shF);                                     // мішок за спиною, у дальній руці
     limb('leg_f', at(R.hip[1]), fl1, fl2, R.LEG, true);
-    L.sprite(kind + '_body', 0, 0, { m: Mb, w: bw, h: bh, pivot: [bw * 0.5, bh * R.pv], u });
+    if (extra && extra.body) { const aw = bh * G.tex(extra.body).w / G.tex(extra.body).h;          // запасний тулуб (інший вираз обличчя) — тієї ж висоти
+      L.sprite(extra.body, 0, 0, { m: Mb, w: aw, h: bh, pivot: [aw * 0.5, bh * R.pv], u }); }
+    else L.sprite(kind + '_body', 0, 0, { m: Mb, w: bw, h: bh, pivot: [bw * 0.5, bh * R.pv], u });
     limb('leg_n', at(R.hip[0]), nl1, nl2, R.LEG, false);
     const el = limb('arm_n', at(R.sh[0]), na1, na2, R.ARM, false);
     const ah = G.tex(kind + '_arm_n').h * k;
@@ -175,6 +184,13 @@
       if (e.st === 'cower') Q = L.lerpP(Q, P.cower, L.SS(0, 0.2, a));
       if (!gone && e.st !== 'cower') { Q = Q.slice(); Q[4] = P.sack[4] + 6 * Math.sin(ph); Q[5] = P.sack[5]; }   // дальня рука тримає мішок на плечі
       if (gone) Q = gait(ph, 1.3, 1.2);
+    } else if (kind === 'burchak') {
+      const walk = Math.min(1, sp / 120); Q = L.lerpP(P.idle, gait(ph, 1.2, 1), walk).slice();
+      if (e.carry) { Q[4] = P.carry[4] + 6 * Math.sin(ph); Q[5] = P.carry[5]; }        // дальня рука тримає мішок із зіркою
+      if (e.st === 'throw') Q = a < 0.35 ? L.lerpP(Q, P.wind, L.SS(0, 0.3, a)) : L.lerpP(P.wind, P.fling, L.SS(0.35, 0.45, a));
+      if (e.st === 'dizzy') { Q = P.dizzy.slice(); Q[8] = 8 * Math.sin(GT * 5); }
+      if (e.st === 'down') Q = L.lerpP(P.dizzy, P.down, L.SS(0, 0.4, a));
+      if (e.st === 'leap') Q = P.fling;
     } else if (kind === 'snuffer') {
       // повільна похмура хода; ближня рука тримає палицю (лише дальня махає); snuff — підняти палицю до ліхтаря
       const walk = Math.min(1, sp / 70); Q = L.lerpP(P.idle, gait(ph, gone ? 1.2 : 0.7, gone ? 1 : 0.5), walk).slice();
@@ -191,9 +207,12 @@
     const fade = gone ? 1 - L.SS(1.6, 2.5, a) : 1, u = { alpha: fade, tint: hit ? [1, 0.5, 0.45, 0.55] : [1, 1, 1, 0] };
     if (!L.sp) L.shadow(x, (e.y || GY) + Y(1) + 3, kind === 'bully' ? 46 : 34, 7, 0.5 * fade);
     const pole = kind === 'snuffer' && !gone;
+    // Бурчак: обличчя міняється (лютий — у бою, очі-спіралі — оглушений), мішок із зіркою — за спиною
+    const bx = kind === 'burchak' ? { body: e.st === 'dizzy' || e.st === 'down' ? 'burchak_dizzy' : e.ph >= 1 && GT - e.hitT > 0.3 ? 'burchak_angry' : null,
+      behind: e.carry ? (sh) => { const s = 130; L.sprite('starsack', 0, 0, { m: M.of(M.t(sh[0] - face * 10, sh[1] + 10), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s * 426 / 620, h: s, pivot: [s * 0.34, s * 0.2], flip: face < 0, u }); } : null } : null;
     const extra = kind === 'thief' && !gone ? { behind: (sh) => { const s = 92;
       L.sprite('sack', 0, 0, { m: M.of(M.t(sh[0] - face * 8, sh[1] + 6), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s, h: s, pivot: [s / 2, s * 0.25], flip: face < 0, u }); } } : null;
-    const J = puppet(kind, Q, x, y, face, u, extra);
+    const J = puppet(kind, Q, x, y, face, u, bx || extra);
     L.joint(kind + i, 'hand', J.hand);
     // палиця-гасильник у ближній кисті: зазвичай нахилена назад через плече; під час гасіння дзвоник тягнеться до скла ліхтаря
     if (pole) { const ph2 = 300, pw2 = L.hsz('snuffer_pole', ph2), hold = 0.55;
@@ -205,7 +224,7 @@
     // вугілля в кисті під час замаху; у момент кидка далі летить снаряд із симуляції — з тієї ж точки
     if (kind === 'bully' && e.st === 'throw' && a < 0.45 && !L.sp) L.sprite('coal', J.hand[0] - 15, J.hand[1] - 15, { w: 30 });
     if (kind === 'bully' && e.st === 'throw' && a > 0.43 && a < 0.45) L.anchor('coal' + i, [e.x + face * 11 + X(1), (e.y || GY) - 192 + Y(1)], J.hand, 16);
-    if (e.st === 'cower' || (hit && e.hp > 0)) for (let j = 0; j < 3; j++) { const an = GT * 5 + j * 2.1;
+    if (e.st === 'cower' || e.st === 'dizzy' || (hit && e.hp > 0)) for (let j = 0; j < 3; j++) { const an = GT * 5 + j * 2.1;
       L.star(J.head[0] + Math.cos(an) * 30, J.head[1] - 14 + Math.sin(an) * 8, 8, [1, 0.9, 0.5], 0.9); }
   };
 
@@ -227,7 +246,8 @@
     for (const s of ST.loose) { const age = GT - s.t0, a = age > 5.5 ? (Math.floor(age * 10) % 2 ? 0.3 : 1) : 1;   // скоро зникне — блимає
       L.sprite(SWT[Math.floor(s.t0 * 10) % 4], s.x + X(1) - 18, s.y + Y(1) - 18, { h: 38, u: { alpha: a } }); }
     for (const p of ST.shots) { const xx = p.x + X(1), yy = p.y + Y(1);
-      const n = p.k === 'cone' ? 'cone' : p.k === 'coal' ? 'coal' : 'cracker', h = p.k === 'cracker' ? 44 : 30;
+      const n = p.k === 'cone' ? 'cone' : p.k.startsWith('coal') ? 'coal' : 'cracker', h = p.k === 'cracker' ? 44 : 30;
+      if (p.k === 'coalback') L.glow(xx, yy, 46, [1, 0.55, 0.2], 0.5, 3);                          // відбите вугілля жевріє — летить назад до боса
       L.sprite(n, 0, 0, { m: M.of(M.t(xx, yy), M.r(p.a)), h, pivot: [L.hsz(n, h) / 2, h / 2] });
       if (p.k === 'cracker') { const sp = M.ap(M.of(M.t(xx, yy), M.r(p.a)), [L.hsz(n, h) * 0.3, -h * 0.5]);       // іскра на ґноті
         L.star(sp[0], sp[1], 12 + 4 * Math.sin(GT * 40), [1, 0.85, 0.4], 1); L.glow(sp[0], sp[1], 40, [1, 0.6, 0.2], 0.4, 3); } }

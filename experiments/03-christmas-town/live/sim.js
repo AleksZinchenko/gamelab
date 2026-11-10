@@ -6,6 +6,7 @@
   if (!root.LEVELS.hub && typeof require !== 'undefined') require('./hub.js');
   if (!root.LEVELS.roofs && typeof require !== 'undefined') require('./roofs.js');   // у node площу підтягуємо самі (у браузері — index.html)
   if (!root.LEVELS.river && typeof require !== 'undefined') require('./river.js');
+  if (!root.LEVELS.tower && typeof require !== 'undefined') require('./tower.js');
   const DT = 1 / 120, L = 16.0;                  // крок симуляції і довжина циклу демо (с)
   const VIEW = { W: 1920, H: 1080 }, GY = LV.GY;
   // «Відчуття» руху (px, с). JUMP дає стрибок ~360 px (2.2 зросту героя) — щоб діставати навіси й підвіконня.
@@ -151,7 +152,7 @@
         if (sy !== null && py <= sy + 1 && S.y >= sy && (!best || sy < best.y)) best = { s, y: sy }; }
         if (best) { S.landV = S.vy; S.y = best.y; S.vy = 0; S.ground = best.s.id; S.landT = t; S.ev.push({ k: 'land', t, x: S.x, y: best.y, v: S.landV }); } }
     }
-    S.x = Math.max(LV.HUB ? 80 : 40, Math.min(LV.XMAX || LV.LEN + 300, S.x));
+    S.x = Math.max(LV.HUB ? 80 : 40, Math.min(S.xmax || LV.XMAX || LV.LEN + 300, S.x));          // S.xmax — межа, яку ставить правило рівня (вежа)
     // ---- стрибок (з буфером і «часом койота») ----
     if (S.buf > 0 && !S.climb && (S.ground || S.coyote > 0) && S.faint < 0) { S.vy = -K.JUMP; S.ground = null; S.coyote = 0; S.buf = 0; S.jumpT = t; S.cut = true;
       S.ev.push({ k: 'jump', t, x: S.x, y: S.y }); }
@@ -177,7 +178,7 @@
     const ct = Math.max(-40, Math.min(40, S.vy * 0.03)) + (S.ground ? Math.max(-30, Math.min(30, -S.vx * 0.06)) : -S.vx * 0.03);
     S.scarfOm += (150 * (ct - S.scarfTh) - 12 * S.scarfOm) * DT; S.scarfTh += S.scarfOm * DT;
     // ---- камера: по x — з випередженням у бік погляду; по y — «прилипає» до платформи, на якій стоїш ----
-    const ctg = Math.max(0, Math.min(LV.LEN - VIEW.W + 400, S.x + S.face * 220 - VIEW.W / 2));
+    const ctg0 = Math.max(0, Math.min(LV.LEN - VIEW.W + 400, S.x + S.face * 220 - VIEW.W / 2)), ctg = LV.camX ? LV.camX(S, ctg0) : ctg0;   // вежа: камера по x стоїть
     S.camV += (30 * (ctg - S.cam) - 11 * S.camV) * DT; S.cam += S.camV * DT;
     // CAMY — на якій висоті екрана тримати героя (вулиця — 820, біля низу; дахи — вище, щоб бачити, що внизу)
     const cyo = LV.CAMY || 820; let cy = S.camY; if (S.ground || S.climb || S.y - S.camY > 1000 || S.y - S.camY < 330) cy = Math.min(0, S.y - cyo);

@@ -91,6 +91,7 @@
       u: { grade: [0.7, 0.62, 0.32, 0.8], haze: [0.10, 0.14, 0.30], lod: 0.6 } });
     L.fog(700, 260, [0.003, 0.03, 0.45, 0.4], [0.22, 0.28, 0.45], 2, t, 0.2);
     if (LV.HUB) PLAZA.sky(ST, GT, X, Y);                                     // феєрверк над площею (фінал)
+    if (LV.TOWER) TOWERDRAW.bg(ST, GT, t, X, Y);                            // вежа: цегляне нутро нижче за дзвіницю
 
     // ===================== ігровий план → T.comp =====================
     L.beginComp();
@@ -105,6 +106,7 @@
     // реквізит
     for (const p of LV.PROPS) { if (!onScreen(p.x)) continue; const w = L.hsz(p.tex, p.h);
       L.sprite(p.tex, Math.round(p.x - w / 2 + X(1)), Math.round((p.y || GY) - p.h + 6 + Y(1)), { h: p.h }); }
+    if (LV.TOWER) TOWERDRAW.front(ST, GT, t, X, Y, onScreen);                // балки, шестерні, маятники, дзвін, ліхтарики
     ROOFDRAW.front(ST, GT, t, X, Y, onScreen);                               // драбини, місточки, пласти, дим (дахи)
     if (LV.RIVER) { RIVERDRAW.ground(ST, GT, t, X, Y, camX); RIVERDRAW.movers(ST, GT, t, X, Y, onScreen); }   // річка: берег, лід, вода, крижини, колесо
     caps(X, Y, onScreen);                                                    // сніжні краї платформ — поверх будинків і реквізиту
@@ -120,6 +122,7 @@
     ST.bu.forEach((e, i) => onScreen(e.x) && DRAW.enemy('bully', e, i, ST, GT, t, X, Y));
     ROOFDRAW.pigeons(ST, GT, t, X, Y, onScreen);
     (ST.sn || []).forEach((e, i) => onScreen(e.x) && DRAW.enemy('snuffer', e, i, ST, GT, t, X, Y));   // гасильники (річка)
+    if (ST.boss && onScreen(ST.boss.x)) DRAW.enemy('burchak', ST.boss, 0, ST, GT, t, X, Y);          // бос (вежа)
     L.inked(() => DRAW.hero(ST, GT, t, X, Y), { r: 2, n: 6, col: [0.04, 0.04, 0.07], dy: 0 });
     FX.events(ST, GT, t, X, Y);
     if (LV.RIVER) { RIVERDRAW.smoke(ST, GT, t, X, Y, onScreen); RIVERDRAW.dark(ST, GT, t, X, Y, onScreen); }   // ніч: кадр × карта світла
@@ -140,6 +143,7 @@
       else L.glow(lpx, lpy, 30, [0.5, 0.6, 0.9], 0.15, 3); });
     if (LV.HUB) PLAZA.light(ST, GT, t, X, Y);
     ROOFDRAW.light(ST, GT, t, X, Y, onScreen);                               // жар у запалених димарях
+    if (LV.TOWER) TOWERDRAW.light(ST, GT, t, X, Y);                          // ліхтарики-чекпоінти у вежі
     glints(ST, t, X, Y, onScreen);                                           // іскри на краях, до яких зараз дістанеш
 
     // ===================== сніг: два шари пластівців, вітер з симуляції =====================

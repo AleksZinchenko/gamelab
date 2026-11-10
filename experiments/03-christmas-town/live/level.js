@@ -62,7 +62,8 @@
 
   // LEVEL — АКТИВНИЙ рівень: усі модулі тримають посилання саме на цей об'єкт, а SIM.use('hub' / 'street') підміняє
   // його вміст. LEVELS — «полиця» з даними всіх рівнів (площу додає hub.js).
-  root.LEVEL = { name: 'street', GY, LEN, HK, LEDGES, HOUSES, PROPS, LAMPS, LAMP_H, SWEETS, ORNAMENTS, THIEVES, BULLIES, AMMO, START, END, TEX };
+  // три подарунки; зірку з 2026-11-10 тримає бос (рівень 4), тож третій злодюжка несе звичайний подарунок
+  root.LEVEL = { name: 'street', GIFTS: ['gift_red', 'gift_green', 'gift_red'], GY, LEN, HK, LEDGES, HOUSES, PROPS, LAMPS, LAMP_H, SWEETS, ORNAMENTS, THIEVES, BULLIES, AMMO, START, END, TEX };
   root.LEVELS = { street: Object.assign({}, root.LEVEL) };
   if (typeof module !== 'undefined') module.exports = root.LEVEL;
 })(typeof window !== 'undefined' ? window : globalThis);

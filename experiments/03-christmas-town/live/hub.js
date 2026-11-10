@@ -15,7 +15,7 @@
       [0.53, 0.36], [0.26, 0.47], [0.63, 0.55], [0.27, 0.75], [0.60, 0.78]],                   // 5 прикрас з річки
     candy: [[0.56, 0.19], [0.36, 0.43], [0.73, 0.52], [0.22, 0.67], [0.55, 0.69], [0.84, 0.80], [0.16, 0.82], [0.64, 0.86]],
     tiers: [0.17, 0.27, 0.38, 0.50, 0.63, 0.76],                                              // лінії гірлянди
-    gifts: [-175, 180, -265, 270, -90, 92, 2] };                                              // подарунки під ялинкою (зсув x): вулиця, дахи, річка
+    gifts: [-175, 180, -265, 270, -95, 95, -30, 36] };                                       // подарунки під ялинкою (зсув x): вулиця 0–1, дахи, річка, 3-й вулиці
   TREE.w = TREE.h * LV0.TEX.tree_square[0] / LV0.TEX.tree_square[1];
   TREE.x0 = TREE.x - TREE.w / 2; TREE.y0 = GY - TREE.h + 8;                                  // лівий верхній кут спрайта (+8 — «вкопана»)
   TREE.pt = (u, v) => [TREE.x0 + u * TREE.w, TREE.y0 + v * TREE.h];
@@ -25,8 +25,9 @@
     : k === 'gift' ? [TREE.x + TREE.gifts[i], GY - 34] : TREE.pt(...TREE.top);
   const N_CANDY = TREE.candy.length;
   // з якого рівня кожне місце на ялинці: прикраси 0–4 — вулиця, 5–9 — дахи, 10–14 — річка;
-  // подарунки 0–1 — вулиця, 2–3 — дахи, 4–6 — річка
-  const OFF = { street: { orn: 0, gift: 0 }, roofs: { orn: 5, gift: 2 }, river: { orn: 10, gift: 4 } };
+  // подарунки: вулиця — місця 0, 1 і 7 (третій з'явився, коли зірку забрав бос), дахи — 2–3, річка — 4–6; зірку несе бос вежі
+  const OFF = { street: { orn: 0, gift: 0 }, roofs: { orn: 5, gift: 2 }, river: { orn: 10, gift: 4 }, tower: { orn: 15, gift: 0 } };
+  const GSLOT = { street: [0, 1, 7] };
   TREE.ornKind = (slot) => { const lv = slot < 5 ? 'street' : slot < 10 ? 'roofs' : 'river', L = root.LEVELS[lv], q = L && L.ORNAMENTS[slot - OFF[lv].orn]; return q ? q[2] : 0; };
 
   // ---------------- ратуша і брами ----------------
@@ -36,7 +37,7 @@
   // Брами — виходи з площі на рівні. to: куди веде (null — ще зачинено). post: false — табличка над дверима, без стовпа.
   const GATES = [
     { x: 190, to: 'street', name: 'Пекарська вулиця', dir: -1 },
-    { x: TH.x + TH.w / 2, to: null, name: 'Ратушна вежа' },
+    { x: TH.x + TH.w / 2, to: 'tower', name: 'Ратушна вежа' },
     { x: 3070, to: 'roofs', name: 'Дахи й димарі', dir: 1 },
     { x: 3790, to: 'river', name: 'Замерзла річка', dir: 1 },
   ];
@@ -56,9 +57,9 @@
   // Рівень пройдено: усе зібране, чого ще нема ні на ялинці, ні в торбі, — кладемо в торбу (номери місць на ялинці).
   PROG.bank = (S, lv = 'street') => { const d = PROG.d, b = d.bag, o = OFF[lv] || OFF.street;
     S.orn.forEach((g, i) => { const k = o.orn + i; if (g >= 0 && !d.orn[k] && !b.orn.includes(k)) b.orn.push(k); });
-    // вулиця: подарунки 0–1 (3-й «подарунок» — зірка, нижче); інші рівні — усі їхні подарунки
-    (lv === 'street' ? [0, 1] : S.gifts.map((_, i) => i)).forEach((i) => { const k = o.gift + i; if (S.gifts[i] >= 0 && !d.gifts[k] && !b.gifts.includes(k)) b.gifts.push(k); });
-    if (lv === 'street' && S.gifts[2] >= 0 && !d.star) b.star = 1;                           // третій «подарунок» вулиці — зірка
+    // подарунки рівня → їхні місця під ялинкою; у вежі єдиний «подарунок» — зірка (запускає фінал)
+    if (lv === 'tower') { if (S.gifts[0] >= 0 && !d.star) b.star = 1; }
+    else S.gifts.forEach((g, i) => { const k = GSLOT[lv] ? GSLOT[lv][i] : o.gift + i; if (g >= 0 && !d.gifts[k] && !b.gifts.includes(k)) b.gifts.push(k); });
     if (lv === 'street') d.best = Math.max(d.best, S.sw); PROG.write(); };
   // Площа щокадру повертає свій стан: що вже долетіло до ялинки (летить — теж рахуємо), що лишилось у торбі, чи сяє.
   PROG.sync = (S) => { const d = PROG.d, T = S.tree;

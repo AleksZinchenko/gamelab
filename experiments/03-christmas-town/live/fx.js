@@ -67,6 +67,12 @@
       // ліхтар погасили: клубок сірого диму з-під дзвоника
       if (e.k === 'snuff' && a < 1.2) for (let j = 0; j < 5; j++) { const q = a / 1.2;
         L.puff(ex + (j - 2) * 10 + 20 * q * Math.sin(j), ey - 10 - 80 * q * (0.6 + 0.4 * rnd(e.t, j)), 14 + 26 * q, [0.55, 0.57, 0.65], 0.5 * (1 - q), j + e.t); }
+      // вежа: відбите вугілля — помаранчеві іскри; «БАМ!» дзвона — кола звуку; удар по босу — зірочки; зірка випала — сяйво
+      if (e.k === 'deflect' && a < 0.4) for (let j = 0; j < 8; j++) { const an = j * 0.785 + e.t, d = 10 + 70 * a; L.star(ex + Math.cos(an) * d, ey + Math.sin(an) * d, 10, [1, 0.7, 0.3], 1 - a / 0.4); }
+      if (e.k === 'dong' && a < 1.4) for (let j = 0; j < 3; j++) { const q = a - j * 0.18; if (q > 0) L.ring(ex, ey, 60 + 420 * q, 40 + 260 * q, [1, 0.9, 0.6], 0.8 * (1 - q / 1.4), 0.08); }
+      if (e.k === 'bosshit' && a < 0.6) { L.glow(ex, ey, 160, [1, 0.5, 0.3], 0.6 * (1 - a / 0.6), 2.5);
+        for (let j = 0; j < 7; j++) { const an = j * 0.9 + 0.3, d = 20 + 120 * a; L.star(ex + Math.cos(an) * d, ey + Math.sin(an) * d, 14, [1, 0.9, 0.5], 1 - a / 0.6); } }
+      if (e.k === 'starfall' && a < 1.5) L.glow(ex, ey, 300 * SS(0, 0.3, a), [1, 0.85, 0.45], 0.9 * (1 - a / 1.5), 2);
       if (e.k === 'ding' && a < 0.3) L.star(ex, ey, 30 * (1 - a / 0.3), [1, 1, 0.9], 1);
       if (e.k === 'faint' && a < 1.6) for (let j = 0; j < 4; j++) { const an = GT * 4 + j * 1.57; L.star(ex + Math.cos(an) * 40, ey - 70 + Math.sin(an) * 10, 10, [1, 0.95, 0.6], 1); }
       if (e.k === 'revive' && a < 0.8) L.ring(ex, ey - 80, 40 + 120 * a, 40 + 120 * a, [1, 0.9, 0.6], 1 - a / 0.8, 0.1);

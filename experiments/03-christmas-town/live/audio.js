@@ -128,6 +128,14 @@
         case 'snuff': play('plate', 0.3, 1.6, p); noise(0.5, 1200, 300, 0.12, 'lowpass', 0.05, p); break;   // «пух» — ліхтар погас
         case 'snufferhit': play('punch' + (Math.floor(e.t * 3) % 2), 0.6, 0.95, p); break;
         case 'snufferout': play('whoosh', 0.6, 0.8, p); play('punchh', 0.5, 0.85, p); [7, 4, 0].forEach((n, j) => chime(note(n, 1046), 0.08, 0.25 + j * 0.09, p)); break;
+        // ---- вежа: бій із Бурчаком ----
+        case 'deflect': play('wood', 0.5, 1.4, p); chime(1318, 0.08, 0, p, 0.4); break;                     // шишка відбила вугілля
+        case 'bosshit': play('punchh', 0.7, 0.8, p); play('oops', 0.5, 0.7, p, 0.05); break;
+        case 'bosslaugh': play('spot', 0.45, 0.65, p); break;                                         // «Ха!» — не влучив
+        case 'bossphase': [0, 3, 7].forEach((n, j) => chime(note(n, 523), 0.12, j * 0.12, p, 0.8)); play('whoosh', 0.5, 0.7, p); break;
+        case 'dong': for (let j = 0; j < 3; j++) play('bell', 0.7 - j * 0.2, 0.5, p, j * 0.02); noise(0.8, 300, 120, 0.25, 'lowpass', 0, p, 0.9); break;   // БАМ!
+        case 'starfall': [0, 4, 7, 12, 16].forEach((n, j) => chime(note(n, 784), 0.12, j * 0.08, p, 1.2)); play('bell', 0.4, 1.4, p, 0.2); break;
+        case 'fallout': play('oops', 0.5, 0.8, p); noise(0.6, 600, 2400, 0.12, 'bandpass', 0, p); break;
         // ---- площа ----
         case 'gate': play('ui_open', 0.5, 0.9, p); play('whoosh', 0.45, 0.8, p); break;
         case 'locked': play('wood', 0.6, 0.6, p); play('wood', 0.5, 0.55, p, 0.16); break;          // «тук-тук» у зачинену браму

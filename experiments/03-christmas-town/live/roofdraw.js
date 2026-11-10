@@ -24,7 +24,7 @@
       const sh = s.st === 'rest' && Math.abs(ST.x - s.x) < 260 && Math.abs(ST.y - s.y) < 160 ? 1.5 * Math.sin(GT * 40) : 0;   // герой поруч — пласт тремтить
       L.sprite('slab', 0, 0, { m: M.of(M.t(s.x + sh + X(1), s.y + Y(1) + 8), M.r(a)), w, h, pivot: [w / 2, h * 0.85] }); });
     // дим із запалених димарів (чекпоінтів): клуби піднімаються, вітер їх зносить
-    (LV.CHIMNEYS || []).forEach((c, i) => { if (!(ST.ch && ST.ch[i] >= 0) || !onScreen(c.x)) return; const k = SS(0, 0.8, GT - ST.ch[i]);
+    (LV.CPLAMP ? [] : LV.CHIMNEYS || []).forEach((c, i) => { if (!(ST.ch && ST.ch[i] >= 0) || !onScreen(c.x)) return; const k = SS(0, 0.8, GT - ST.ch[i]);   // вежа: чекпоінти — ліхтарики, не димарі
       for (let j = 0; j < 7; j++) { const ph = (t * 0.32 + j / 7) % 1, x = c.x + X(1) + Math.sin(t * 0.8 + j * 1.7) * 14 * ph + SIM.windAt(t, c.x) * 70 * ph;
         L.puff(x, c.y - 150 + Y(1) - ph * 190, 12 + 30 * ph, [0.72, 0.75, 0.84], 0.5 * (1 - ph) * k, j + i * 7); } });
   };
@@ -53,7 +53,7 @@
   });
 
   // ---------------- світло: жар у запалених димарях ----------------
-  R.light = (ST, GT, t, X, Y, onScreen) => (LV.CHIMNEYS || []).forEach((c, i) => { if (!(ST.ch && ST.ch[i] >= 0) || !onScreen(c.x)) return;
+  R.light = (ST, GT, t, X, Y, onScreen) => (LV.CPLAMP ? [] : LV.CHIMNEYS || []).forEach((c, i) => { if (!(ST.ch && ST.ch[i] >= 0) || !onScreen(c.x)) return;
     const k = SS(0, 0.5, GT - ST.ch[i]); L.glow(c.x + X(1), c.y - 150 + Y(1), 130, [1, 0.6, 0.3], 0.32 * k * (0.85 + 0.15 * Math.sin(t * 7 + i)), 2.4); });
 
   // ---------------- вітер: білі смуги летять у бік вітру — видно, де зносить ----------------

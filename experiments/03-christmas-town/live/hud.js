@@ -108,7 +108,7 @@
     const gx = W - 40 - ng * 74; L.rrect(gx - 16, 24, ng * 74 + 26, 76, 22, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.72); L.uiBox('gifts', gx - 16, 24, ng * 74 + 26, 76, 0);
     GF.forEach((n, i) => { const g = ST.gifts[i], a = g >= 0 ? SS(0.5, 0.8, GT - g) : 0;
       icon(n, gx + 32 + i * 74, 62, 54 * (1 + 0.3 * Math.max(0, 1 - Math.abs(GT - g - 0.8) / 0.2) * (g >= 0 ? 1 : 0)), 0.22 + 0.78 * a); });
-    const ox = W - 40 - 5 * 46; L.rrect(ox - 14, 108, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns', ox - 14, 108, 5 * 46 + 22, 56, 0);
+    const ox = W - 40 - 5 * 46; if (LV.ORNAMENTS.length) { L.rrect(ox - 14, 108, 5 * 46 + 22, 56, 18, [0.06, 0.08, 0.16], [0.03, 0.04, 0.09], 0.6); L.uiBox('orns', ox - 14, 108, 5 * 46 + 22, 56, 0); }   // у вежі прикрас нема
     LV.ORNAMENTS.forEach(([, , k], i) => icon(['orn_red', 'orn_gold', 'orn_blue'][k], ox + 18 + i * 46, 136, 40, ST.orn[i] >= 0 ? 1 : 0.22));
     // підібраний подарунок/прикраса летить у свій слот (дуга від місця підбору)
     for (const e of ST.ev) { const a = GT - e.t; if (a < 0 || a > 0.8 || (e.k !== 'gift' && e.k !== 'ornament')) continue;
@@ -116,6 +116,7 @@
       const cx = (x0 + tx) / 2, cy = Math.min(y0, ty) - 200, px = (1 - q) ** 2 * x0 + 2 * (1 - q) * q * cx + q * q * tx, py = (1 - q) ** 2 * y0 + 2 * (1 - q) * q * cy + q * q * ty;
       const n = e.k === 'gift' ? GF[e.i] : ['orn_red', 'orn_gold', 'orn_blue'][LV.ORNAMENTS[e.i][2]];
       L.glow(px, py, 60, [1, 0.8, 0.4], 0.6, 3); icon(n, px, py, 60 - 10 * q); }
+    if (ST.boss && ST.boss.ph > 0) bossBar(ST, GT);
     // підказка на старті (зникає сама): спершу керування, далі (якщо є) — підказка самого рівня
     const ht0 = ST.t, lvh = LV.HINT && ht0 >= 6, ht = lvh ? ht0 - 6 : ht0;
     if (ht < 6 && UI.mode === 'play') { const a = SS(0, 0.5, ht) * (1 - SS(5, 6, ht)), s = lvh ? LV.HINT : SIM.HINT, w = L.labelW('hint', s, { size: 28 }) + 40;
@@ -177,13 +178,25 @@
       L.label('cv' + i, b, x + 520, y + 150 + i * 70, { size: 34, col: CREAM, out: INK, a: k }); });
     buttons(ITEMS.controls(), W / 2, y + h + 40, t);
   }
+  // смужка боса вгорі посередині: ім'я, три фази (пройдені — золоті), «здоров'я» поточної фази; на початку фази — підказка
+  const BOSS_TIP = ['', 'Збий вугілля шишкою — і воно полетить назад у Бурчака!', 'Кинь хлопавку до дзвона, коли Бурчак під ним!', 'Наздожени Бурчака на даху й влуч шишкою!'];
+  function bossBar(ST, GT) { const B = ST.boss, w = 560, x = W / 2 - w / 2, y = 26, max = B.ph === 2 ? 2 : 3, bump = Math.max(0, 1 - (GT - B.hitT) / 0.3);
+    L.rrect(x, y, w, 78, 22, [0.12, 0.05, 0.1], [0.05, 0.02, 0.05], 0.8); L.uiBox('boss', x, y, w, 78, 0);
+    L.label('bossn', 'Пан Бурчак', x + 26, y + 30, { size: 30, col: '#ffe7b0', out: INK });
+    for (let p = 1; p <= 3; p++) L.rrect(x + w - 200 + (p - 1) * 62, y + 16, 50, 16, 8, p < B.ph ? [0.95, 0.75, 0.3] : p === B.ph ? [0.85, 0.3, 0.3] : [0.25, 0.2, 0.25], p < B.ph ? [0.7, 0.5, 0.15] : [0.4, 0.1, 0.12], 1);
+    const hp = B.ph === 3 && B.hp <= 0 ? 0 : B.hp; L.rrect(x + 26, y + 52, (w - 52) * Math.max(0, hp) / max, 14, 7, [1, 0.35 + 0.5 * bump, 0.3], [0.6, 0.12, 0.12], 1);
+    const a = GT - ST.bmsg; if (a >= 0 && a < 6) { const k = SS(0, 0.4, a) * (1 - SS(5, 6, a)), s = BOSS_TIP[B.ph], tw = L.labelW('btip', s, { size: 30 }) + 40;
+      L.rrect(W / 2 - tw / 2, y + 96, tw, 52, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.8 * k); L.uiBox('btipb', W / 2 - tw / 2, y + 96, tw, 52, 4);
+      L.label('btip', s, W / 2, y + 122, { size: 30, col: CREAM, out: INK, al: 0.5, a: k }); } }
   function done(ST, GT, t) {
     const k = SS(0, 0.4, t - UI.t0); L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, 0.55 * k);
     const w = 980, h = 470, x = W / 2 - w / 2, y = 140; panel(x, y, w, h, k); L.uiBox('done', x, y, w, h, 8);
     L.label('dt', LV.TITLE || 'Вулицю врятовано!', W / 2, y + 74, { size: 76, col: '#ffe7b0', out: '#5a1018', al: 0.5, a: k });
     const tot = LV.SWEETS.length, c = (v, d) => Math.round(v * SS(d, d + 0.8, t - UI.t0));     // числа «набігають»
-    const rows = [['it_candy', 'Солодощі', c(ST.got.filter((g) => g >= 0).length, 0.4) + ' / ' + tot], ['orn_gold', 'Прикраси', c(ST.orn.filter((g) => g >= 0).length, 1.0) + ' / 5'],
-      ['gift_red', 'Подарунки', c(ST.gifts.filter((g) => g >= 0).length, 1.6) + ' / ' + LV.THIEVES.length]];
+    // рівень з босом: замість прикрас і подарунків — повернута зірка
+    const rows = LV.BOSS ? [['it_candy', 'Солодощі', c(ST.got.filter((g) => g >= 0).length, 0.4) + ' / ' + tot], ['star', 'Зірка', c(ST.gifts[0] >= 0 ? 1 : 0, 1.0) + ' / 1']]
+      : [['it_candy', 'Солодощі', c(ST.got.filter((g) => g >= 0).length, 0.4) + ' / ' + tot], ['orn_gold', 'Прикраси', c(ST.orn.filter((g) => g >= 0).length, 1.0) + ' / ' + LV.ORNAMENTS.length],
+      ['gift_red', 'Подарунки', c(ST.gifts.filter((g) => g >= 0).length, 1.6) + ' / ' + (LV.GIFTS || LV.THIEVES).length]];
     rows.forEach(([n, a, b], i) => { const yy = y + 190 + i * 88; icon(n, x + 150, yy, 62, k);
       L.label('dr' + i, a, x + 220, yy, { size: 44, col: CREAM, out: INK, a: k }); L.label('dv' + i, b, x + w - 120, yy, { size: 48, col: GOLD, out: INK, al: 1, a: k }); });
     buttons(ITEMS.done(), W / 2, y + h + 40, t);
