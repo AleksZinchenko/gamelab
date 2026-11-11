@@ -1,0 +1,5 @@
+Use case: background townsfolk (non-player characters) in the happy Christmas finale of a side-scrolling platformer.
+Image 2 shows the SAME three townsfolk sad: keep every figure's design, clothes, colours, proportions, scale, pixel size and order exactly.
+Subject: the same three figures, now overjoyed: big smiles, eyes bright, heads up; adults raise one or both arms in joy (the mother waves, the little daughter hugs her leg; the kids throw their hands up, the lamplighter lifts his cap) while keeping the same props (cane, ladder, sled, mail bag). Facing right in the same slight 3/4 side view.
+Composition: the three figures in one row, full body, upright, all at the SAME scale (adults about 1.5 times as tall as the hero kid of Image 2), feet on one line at 90% height, wide empty gaps, nothing touching.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no snow on the ground, no text.

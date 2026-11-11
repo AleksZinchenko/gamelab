@@ -114,6 +114,7 @@
     if (!LV.RIVER) { const g = A('ground'), k = 0.8, gw = g.w * k, walk = (g.walk || 14) * k, x0 = Math.floor(camX / gw) * gw - gw;
       for (let x = x0; x < camX + W + gw; x += gw - 1) L.sprite('ground', Math.round(x + X(1)), Math.round(GY - walk + Y(1)), { w: gw, h: g.h * k });
       L.solid(0, GY - walk + g.h * k - 4 + Y(1), W, 400, [0.05, 0.06, 0.1]); }
+    if (LV.HUB) PLAZA.folk(ST, GT, t, X, Y, onScreen);                       // містяни — за ялинкою й героєм (сумні / радісні)
     if (LV.HUB) PLAZA.tree(ST, GT, t, X, Y);                                 // ялинка посеред площі — перед ратушею, за героєм
 
     // предмети, вороги, герой

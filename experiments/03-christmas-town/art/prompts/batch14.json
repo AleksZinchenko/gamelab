@@ -1,0 +1,1 @@
+[{"name": "folk_a_happy", "prompt": "art/prompts/folk_a_happy.txt", "ref": ["art/gen/folk_a_sad.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"}, {"name": "folk_b_happy", "prompt": "art/prompts/folk_b_happy.txt", "ref": ["art/gen/folk_b_sad.png"], "size": "1536x1024", "alpha": "key", "key": "ff00ff"}]

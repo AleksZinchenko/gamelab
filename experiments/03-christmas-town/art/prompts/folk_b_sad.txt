@@ -1,0 +1,5 @@
+Use case: background townsfolk (non-player characters) standing on the town square of a side-scrolling Christmas platformer.
+Image 2 is the hero kid: match its pixel size, outline and shading exactly, but NOT its design; use it for scale.
+Subject: three separate townsfolk of a cosy half-timbered European town, facing right in a slight 3/4 side view, all SAD on Christmas Eve because the town tree has been stolen: heads lowered, shoulders drooping, mouths turned down, eyes downcast. (1) an old lamplighter in a dark blue uniform coat and a peaked cap, a short ladder over his shoulder; (2) two small kids (a boy and a girl) in colourful knitted hats and scarves, the boy pulling a little wooden sled on a rope — the two kids together count as one figure; (3) a tall postman in a burgundy coat with brass buttons, a cap and a leather mail bag on a strap.
+Composition: the three figures in one row, full body, upright, all at the SAME scale (adults about 1.5 times as tall as the hero kid of Image 2), feet on one line at 90% height, wide empty gaps, nothing touching.
+Constraints: background flat solid #FF00FF; no shadow, no ground, no snow on the ground, no text.

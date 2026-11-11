@@ -88,6 +88,34 @@
       L.sprite(n, 0, 0, { m: M.of(M.t(x, y), M.r(e.kind === 'star' ? q * 6.283 : 0.3 * Math.sin(q * 9))), h, pivot: [L.hsz(n, h) / 2, h / 2] }); }
   }
 
+  // ---------------- містяни (2026-11-11): сумні до фіналу, у фіналі підстрибують від радості ----------------
+  // Кожен — один малюнок у двох станах (folk_<хто>_sad / _happy), оживлений кодом: дихання, зітхання, підскоки.
+  // x — де стоїть, face — куди дивиться (1 — праворуч), foot — де між ступнями (частка ширини: [сумний, радісний]),
+  // hk — поправка масштабу радісного малюнка (аркуш A радісних намальований на ~15 % більшим).
+  const FOLK = [
+    { n: 'baker', x: 470, face: 1, foot: [0.534, 0.556], hk: 0.87 }, { n: 'grandpa', x: 1000, face: 1, foot: [0.498, 0.587], hk: 0.87 },
+    { n: 'mother', x: 2380, face: -1, foot: [0.503, 0.569], hk: 0.87 }, { n: 'kids', x: 2560, face: -1, foot: [0.435, 0.42], hk: 0.97 },
+    { n: 'lamplighter', x: 2700, face: -1, foot: [0.539, 0.479], hk: 0.97 }, { n: 'postman', x: 3260, face: -1, foot: [0.491, 0.438], hk: 0.97 },
+  ];
+  // місця вибрано поза світлом вітрини пекарні (x ≈ 620–930): адитивне світло робить фігуру там напівпрозорою
+  const FOLK_K = 0.34;                                         // піксель аркуша → піксель екрана (дорослий ≈ 205 px, герой — 160)
+  P.folk = (ST, GT, t, X, Y, onScreen) => FOLK.forEach((f, i) => { if (!onScreen(f.x)) return;
+    // коли стрибнув від радості: на вже засяяній площі — давно; до фіналу — ніколи; у фіналі — по черзі з 1-ї секунди
+    const joy = ST.fin === -100 ? -100 : ST.fin === -1 ? Infinity : ST.fin + 1.0 + i * 0.35, a = GT - joy;
+    const happy = a > 0.22;                                    // підміна малюнка — у верхній точці стрибка (0.22 с з 0.45)
+    let hop = 0, sx = 1, sy = 1, rot = 0;
+    if (!happy) { const sigh = Math.max(0, Math.sin((t + i * 1.7) * 0.9)) ** 12;                    // зрідка — глибоке зітхання
+      sy = 1 + 0.012 * Math.sin(t * 1.6 + i) - 0.03 * sigh; sx = 1 / Math.sqrt(sy); rot = 0.015 * Math.sin(t * 0.7 + i); }
+    else { const c = (a - 0.45) % 2.6, jump = a < 0.45 ? a : c < 0.4 ? c : -1;                         // перший стрибок, далі — підскок раз на 2.6 с
+      if (jump >= 0) { const d = jump < 0.45 && a < 0.45 ? 0.45 : 0.4, u = jump / d; hop = (a < 0.45 ? 46 : 22) * 4 * u * (1 - u); }
+      rot = 0.05 * Math.sin(t * 2.4 + i * 1.3); sy = 1 + 0.02 * Math.sin(t * 4.8 + i); sx = 1 / Math.sqrt(sy); }
+    if (a >= 0 && a < 0.06) sy *= 0.9;                                                                   // присів перед стрибком
+    const n = 'folk_' + f.n + (happy ? '_happy' : '_sad'), tex = G.tex(n), k = FOLK_K * (happy ? f.hk : 1);
+    const w = tex.w * k * sx, h = tex.h * k * sy, ft = f.foot[happy ? 1 : 0], px0 = (f.face > 0 ? ft : 1 - ft) * w;
+    L.sprite(n, 0, 0, { m: M.of(M.t(Math.round(f.x + X(1)), Math.round(GY + 6 - hop + Y(1))), M.r(rot)), w, h, pivot: [px0, h], flip: f.face < 0 });
+    if (a >= 0.2 && a < 1.0) for (let j = 0; j < 6; j++) { const an = j / 6 * 6.283 + i, d = 30 + 60 * (a - 0.2);   // іскорки радості
+      L.star(f.x + X(1) + Math.cos(an) * d, GY - h * 0.7 + Y(1) + Math.sin(an) * d * 0.6, 9, CONF[j % 5], 0.9 * (1 - (a - 0.2) / 0.8)); } });
+
   // ---------------- фінал з бандою: гості біля ялинки, подарунок у польоті, «пуф!» перетворення ----------------
   P.gang = (ST, GT, t, X, Y, onScreen) => {
     (ST.gang || []).forEach((e, i) => { if (e.on && onScreen(e.x)) DRAW.enemy(e.kind, e, 10 + i, ST, GT, t, X, Y); });

@@ -49,7 +49,7 @@
   // sp — швидкість, gift — коли Тимко кидає йому подарунок (перетворення — коли той долетить), box — який подарунок.
   const DOOR = TH.x + TH.w / 2;
   const GANG = [
-    { kind: 'thief', x0: 260, tx: 1060, go: 1.5, sp: 170, gift: 8.1, box: 'gift_green' },
+    { kind: 'thief', x0: 260, tx: 1170, go: 1.5, sp: 170, gift: 8.1, box: 'gift_green' },
     { kind: 'snuffer', x0: 3300, tx: 2200, go: 2.2, sp: 190, gift: 8.6, box: 'gift_green' },   // праворуч від ратуші: біля пекарні його «просвічує» вітрина
     { kind: 'bully', x0: 3100, tx: 1950, go: 1.8, sp: 190, gift: 9.1, box: 'gift_red' },
     { kind: 'burchak', x0: DOOR, tx: 1790, go: 4.0, sp: 110, gift: 7.4, box: 'gift_red', door: true },
