@@ -123,6 +123,7 @@
     ROOFDRAW.pigeons(ST, GT, t, X, Y, onScreen);
     (ST.sn || []).forEach((e, i) => onScreen(e.x) && DRAW.enemy('snuffer', e, i, ST, GT, t, X, Y));   // гасильники (річка)
     if (ST.boss && onScreen(ST.boss.x)) DRAW.enemy('burchak', ST.boss, 0, ST, GT, t, X, Y);          // бос (вежа)
+    if (LV.HUB) PLAZA.gang(ST, GT, t, X, Y, onScreen);                       // фінал: банда біля ялинки, подарунок, «пуф!»
     L.inked(() => DRAW.hero(ST, GT, t, X, Y), { r: 2, n: 6, col: [0.04, 0.04, 0.07], dy: 0 });
     FX.events(ST, GT, t, X, Y);
     if (LV.RIVER) { RIVERDRAW.smoke(ST, GT, t, X, Y, onScreen); RIVERDRAW.dark(ST, GT, t, X, Y, onScreen); }   // ніч: кадр × карта світла

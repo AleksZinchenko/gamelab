@@ -88,6 +88,22 @@
       L.sprite(n, 0, 0, { m: M.of(M.t(x, y), M.r(e.kind === 'star' ? q * 6.283 : 0.3 * Math.sin(q * 9))), h, pivot: [L.hsz(n, h) / 2, h / 2] }); }
   }
 
+  // ---------------- фінал з бандою: гості біля ялинки, подарунок у польоті, «пуф!» перетворення ----------------
+  P.gang = (ST, GT, t, X, Y, onScreen) => {
+    (ST.gang || []).forEach((e, i) => { if (e.on && onScreen(e.x)) DRAW.enemy(e.kind, e, 10 + i, ST, GT, t, X, Y); });
+    for (const e of ST.ev) { const a = GT - e.t;
+      // подарунок летить дугою від Тимка до рук Шарфа, крутиться, за ним — іскри
+      if (e.k === 'giftfly' && a >= 0 && a < e.fly) { const q = SS(0, 1, a / e.fly), x0 = e.x + X(1), y0 = e.y + Y(1), x1 = e.tx + X(1), y1 = e.ty + Y(1);
+        const cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - 220, bz = (u) => [(1 - u) ** 2 * x0 + 2 * (1 - u) * u * cx + u * u * x1, (1 - u) ** 2 * y0 + 2 * (1 - u) * u * cy + u * u * y1];
+        for (let j = 1; j < 6; j++) { const [tx, ty] = bz(Math.max(0, q - j * 0.04)); L.star(tx, ty, 12 - j * 1.5, [1, 0.9, 0.6], 0.7 - j * 0.1); }
+        const [x, y] = bz(q), h = 64, n = e.box || 'gift_red'; L.sprite(n, 0, 0, { m: M.of(M.t(x, y), M.r(q * 6.283)), h, pivot: [L.hsz(n, h) / 2, h / 2] }); }
+      // «пуф!»: спалах і кільце іскор, що розлітаються, — ховає миттєву підміну малюнка (сердитий → усміхнений)
+      if (e.k === 'puff' && a >= 0 && a < 1.2) { const x = e.x + X(1), y = e.y + Y(1), k = 1 - SS(0.5, 1.2, a);
+        if (a < 0.3) L.glow(x, y, 240, [1, 0.9, 0.6], 0.8 * (1 - a / 0.3), 2);
+        for (let j = 0; j < 14; j++) { const an = j / 14 * 6.283 + e.t, d = 40 + 170 * (1 - Math.exp(-a * 4));
+          L.star(x + Math.cos(an) * d, y + Math.sin(an) * d * 0.8 - 40 * a, 10 + 6 * rnd(j, 5), CONF[j % 5], 0.9 * k); } } }
+  };
+
   // конфеті у фіналі: падає зверху кілька секунд, кружляючи
   const CONF = [[0.95, 0.25, 0.3], [1, 0.85, 0.3], [0.35, 0.8, 0.45], [0.4, 0.6, 1], [1, 1, 1]];
   function confetti(ST, GT, X, Y) { const a = GT - ST.fin; if (ST.fin === -100 || a < 0.4 || a > 7) return;

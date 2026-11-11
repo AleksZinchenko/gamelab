@@ -42,6 +42,20 @@
     { x: 3790, to: 'river', name: 'Замерзла річка', dir: 1 },
   ];
 
+  // ---------------- фінал з бандою «Сірі Шарфи» (2026-11-11) ----------------
+  // Після зірки банда несміливо сходиться до ялинки, Бурчак виходить із дверей ратуші. Тимко кидає кожному подарунок
+  // (спершу Бурчакові, далі решті) — подарунок долітає, «пуф!» з іскор (за ним ховаємо підміну малюнка) — і Шарф
+  // усміхається, шарф стає кольоровим. go — коли вирушає (с від запуску фіналу), x0 → tx — звідки й куди йде,
+  // sp — швидкість, gift — коли Тимко кидає йому подарунок (перетворення — коли той долетить), box — який подарунок.
+  const DOOR = TH.x + TH.w / 2;
+  const GANG = [
+    { kind: 'thief', x0: 260, tx: 1060, go: 1.5, sp: 170, gift: 8.1, box: 'gift_green' },
+    { kind: 'snuffer', x0: 3300, tx: 2200, go: 2.2, sp: 190, gift: 8.6, box: 'gift_green' },   // праворуч від ратуші: біля пекарні його «просвічує» вітрина
+    { kind: 'bully', x0: 3100, tx: 1950, go: 1.8, sp: 190, gift: 9.1, box: 'gift_red' },
+    { kind: 'burchak', x0: DOOR, tx: 1790, go: 4.0, sp: 110, gift: 7.4, box: 'gift_red', door: true },
+  ];
+  const GIFT_FLY = 0.9, FIN_UI = 12.5;                // скільки летить подарунок; коли екран фіналу
+
   // ---------------- прогрес (PROG): що вже висить на ялинці і що лежить у торбі ----------------
   // У браузері — localStorage (переживає перезапуск), у node і в приватному вікні — просто в пам'яті.
   const KEY = 'yalynka.prog.v2';
@@ -83,6 +97,24 @@
     for (let i = p.candy; i < candyGoal; i++) S.bagQ.push({ k: 'candy', i });
     if (p.bag.star) S.bagQ.push({ k: 'star', i: 0 });
     S.fin = p.lit ? -100 : -1; S.finEv = !!p.lit; S.hangT = -9; S.exit = null; S.finUI = 0;
+    // банда: на вже засяяній площі — одразу стоїть біля ялинки щаслива (Бурчак з подарунком); інакше — ще не прийшла
+    S.gang = GANG.map((g) => ({ kind: g.kind, guest: true, x: p.lit ? g.tx : g.x0, y: GY, vx: 0, dist: 0, st: 'idle', stT: 0, hitT: -9, ph: 0,
+      face: Math.sign(TREE.x - g.tx) || 1, on: !!p.lit, happy: !!p.lit, alpha: 1, gift: !!p.lit, box: g.box, thrown: !!p.lit }));   // gift — тримає подарунок, thrown — його вже кинули
+  }
+  // крок банди у фіналі: a — секунди від запуску фіналу
+  function gangStep(S, t) {
+    const a = t - S.fin, DT = root.SIM.DT;
+    S.gang.forEach((e, i) => { const g = GANG[i]; if (a < g.go) return;
+      e.on = true; if (g.door) e.alpha = Math.min(1, (a - g.go) / 0.5);                 // Бурчак проявляється у дверях ратуші
+      const d = g.tx - e.x;
+      if (Math.abs(d) > 2) { e.vx = Math.sign(d) * g.sp; e.x += e.vx * DT; e.dist += g.sp * DT; e.face = Math.sign(d); e.st = 'walk'; }
+      else { e.vx = 0; e.st = 'idle'; e.face = g.kind === 'burchak' ? Math.sign(S.x - e.x) || -1 : Math.sign(TREE.x - e.x) || 1; }   // Бурчак дивиться на Тимка
+      // Тимко кидає подарунок (дугою від героя до рук Шарфа)
+      if (!e.thrown && a >= g.gift) { e.thrown = true;
+        S.ev.push({ k: 'giftfly', t, x: S.x, y: S.y - 110, tx: g.tx - e.face * 10, ty: GY - (g.kind === 'bully' ? 120 : 150), fly: GIFT_FLY, box: g.box });
+        S.ev.push({ k: 'toss', t, x: S.x, y: S.y - 100 }); }
+      if (!e.happy && a >= g.gift + GIFT_FLY) { e.happy = true; e.stT = t; e.gift = true;
+        S.ev.push({ k: g.kind === 'burchak' ? 'gift' : 'lamp', t, x: e.x, y: GY - 200 }); S.ev.push({ k: 'puff', t, x: e.x, y: GY - 150 }); } });
   }
   function onStep(S, t) {
     // поруч із ялинкою речі з торби по одній злітають на свої місця
@@ -94,7 +126,8 @@
     }
     // зірка сіла на верхівку → фінал: гірлянда загоряється хвилею, вікна, дзвони, феєрверк; через 7 с — екран фіналу
     if (S.fin >= 0 && !S.finEv && t >= S.fin) { S.finEv = true; S.ev.push({ k: 'fin', t, x: TREE.x, y: slotPos('star')[1] }); }
-    if (S.fin >= 0 && !S.finUI && t > S.fin + 7) S.finUI = 1;
+    if (S.fin >= 0) gangStep(S, t);                                                  // банда сходиться до ялинки
+    if (S.fin >= 0 && !S.finUI && t > S.fin + FIN_UI) S.finUI = 1;                   // екран фіналу — після сцени з бандою
   }
 
   // ---------------- дані площі (ті самі поля, що в рівня вулиці) ----------------
@@ -110,7 +143,7 @@
     // край кам'яної клумби під ялинкою — теж платформа (стати й «помилуватися»)
     SURFX: [[TREE.x - 0.24 * TREE.w, GY - 0.075 * TREE.h + 8, TREE.x + 0.24 * TREE.w, GY - 0.075 * TREE.h + 8]],
     SWEETS: [], ORNAMENTS: [], THIEVES: [], BULLIES: [], AMMO: [],
-    GATES, TREE, TH, slotPos, onInit, onStep,
+    GATES, TREE, TH, slotPos, onInit, onStep, GANG,
     HINT: 'Неси добро до ялинки. Брами на вулиці — ліворуч і праворуч: підійди й натисни ↑',
   };
   root.LEVELS.hub = HUB;

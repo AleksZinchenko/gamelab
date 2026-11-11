@@ -182,7 +182,7 @@
       Q = L.lerpP(P.idle, L.lerpP(L.lerpP(P.sneak, gait(ph, 0.55, 0.3), 0.6), gait(ph, 1.15, 1), run), walk);   // крадькома → біг
       if (e.st === 'idle') Q[8] += 4;                                                  // згорблений, крадеться
       if (e.st === 'cower') Q = L.lerpP(Q, P.cower, L.SS(0, 0.2, a));
-      if (!gone && e.st !== 'cower') { Q = Q.slice(); Q[4] = P.sack[4] + 6 * Math.sin(ph); Q[5] = P.sack[5]; }   // дальня рука тримає мішок на плечі
+      if (!gone && e.st !== 'cower' && !e.guest) { Q = Q.slice(); Q[4] = P.sack[4] + 6 * Math.sin(ph); Q[5] = P.sack[5]; }   // дальня рука тримає мішок на плечі
       if (gone) Q = gait(ph, 1.3, 1.2);
     } else if (kind === 'burchak') {
       const walk = Math.min(1, sp / 120); Q = L.lerpP(P.idle, gait(ph, 1.2, 1), walk).slice();
@@ -203,16 +203,24 @@
       if (e.st === 'throw') Q = a < 0.35 ? L.lerpP(Q, P.wind, L.SS(0, 0.3, a)) : L.lerpP(P.wind, P.fling, L.SS(0.35, 0.45, a));
     }
     if (hit && !gone) Q = L.lerpP(Q, P.hit, Math.exp(-(GT - e.hitT) / 0.12));
+    // [фінал] Шарф тримає подарунок перед собою обома руками (передпліччя вперед, на рівні грудей)
+    if (e.gift) { Q = Q.slice(); Q[4] = -50; Q[5] = -55; Q[6] = -60; Q[7] = -50; }
     const x = Math.round(e.x + X(1) + (e.st === 'cower' ? 2 * Math.sin(GT * 70) : 0)), y = Math.round((e.y || GY) + Y(1));   // своя висота (дахи)
-    const fade = gone ? 1 - L.SS(1.6, 2.5, a) : 1, u = { alpha: fade, tint: hit ? [1, 0.5, 0.45, 0.55] : [1, 1, 1, 0] };
+    const fade = (gone ? 1 - L.SS(1.6, 2.5, a) : 1) * (e.alpha === undefined ? 1 : e.alpha), u = { alpha: fade, tint: hit ? [1, 0.5, 0.45, 0.55] : [1, 1, 1, 0] };
     if (!L.sp) L.shadow(x, (e.y || GY) + Y(1) + 3, kind === 'bully' ? 46 : 34, 7, 0.5 * fade);
-    const pole = kind === 'snuffer' && !gone;
+    const pole = kind === 'snuffer' && !gone && !e.gift;                             // з подарунком у руках палицю відклав
     // Бурчак: обличчя міняється (лютий — у бою, очі-спіралі — оглушений), мішок із зіркою — за спиною
     const bx = kind === 'burchak' ? { body: e.st === 'dizzy' || e.st === 'down' ? 'burchak_dizzy' : e.ph >= 1 && GT - e.hitT > 0.3 ? 'burchak_angry' : null,
       behind: e.carry ? (sh) => { const s = 130; L.sprite('starsack', 0, 0, { m: M.of(M.t(sh[0] - face * 10, sh[1] + 10), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s * 426 / 620, h: s, pivot: [s * 0.34, s * 0.2], flip: face < 0, u }); } : null } : null;
     const extra = kind === 'thief' && !gone ? { behind: (sh) => { const s = 92;
       L.sprite('sack', 0, 0, { m: M.of(M.t(sh[0] - face * 8, sh[1] + 6), M.r(-0.3 * face + 0.1 * Math.sin(ph))), w: s, h: s, pivot: [s / 2, s * 0.25], flip: face < 0, u }); } } : null;
-    const J = puppet(kind, Q, x, y, face, u, bx || extra);
+    // [фінал] гість на площі: без мішка; щасливий — усміхнений тулуб і кольоровий кінчик шарфа, що майорить за спиною
+    let ex = bx || extra;
+    if (e.guest) { const bh = G.tex(kind + '_body').h * R.k, sc = kind + '_scarf2';
+      ex = { body: e.happy ? kind + '_happy' : null, behind: e.happy ? (sh) => { const h = bh * 0.5, w = L.hsz(sc, h);
+        L.sprite(sc, 0, 0, { m: M.of(M.t(sh[0] + face * 6, sh[1] - bh * 0.04), M.r(face * (0.5 + 0.12 * Math.sin(t * 2.6 + i)))), w, h, pivot: [w / 2, 4], u }); } : null }; }
+    const J = puppet(kind, Q, x, y, face, u, ex);
+    if (e.gift) { const gn = e.box || 'gift_red', gh = 64, gw = L.hsz(gn, gh); L.sprite(gn, Math.round(J.hand[0] - gw / 2), Math.round(J.hand[1] - gh * 0.7), { w: gw, h: gh, u }); }   // подарунок у руках
     L.joint(kind + i, 'hand', J.hand);
     // палиця-гасильник у ближній кисті: зазвичай нахилена назад через плече; під час гасіння дзвоник тягнеться до скла ліхтаря
     if (pole) { const ph2 = 300, pw2 = L.hsz('snuffer_pole', ph2), hold = 0.55;

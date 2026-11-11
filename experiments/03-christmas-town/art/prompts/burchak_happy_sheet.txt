@@ -1,0 +1,5 @@
+Use case: extra parts for the cut-out rig of a character in a side-scrolling platformer (swapped in for the happy Christmas finale).
+Image 2 is the approved part sheet: follow its design, colours, proportions, scale and pixel size exactly.
+Subject: 2 separate pieces, facing right in the same slight 3/4 side view: (1) the SAME head-and-torso part as part 1 of Image 2 (the grumpy old leader Mr. Burchak: same coat, same size, round empty sleeve openings, nothing below the coat hem; keep the bald head with white tufts, the big red nose and the purple coat) but now HAPPY and touched: a warm shy smile, soft kind eyes, rosy cheeks, eyebrows relaxed; the old grey scarf is replaced by a bright hand-knitted festive scarf, deep red with green and gold stripes; (2) the long end of the same new scarf hanging straight down, the same size and shape as the scarf part of Image 2 but in the new colours.
+Composition: the two pieces in one row with a wide empty gap, the torso exactly the same size as part 1 of Image 2.
+Constraints: background flat solid #FF00FF; no arms, no legs, no shadow, no ground, no text.

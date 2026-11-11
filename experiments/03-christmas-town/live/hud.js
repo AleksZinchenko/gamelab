@@ -145,7 +145,8 @@
     const rows = [['orn_gold', 'Прикраси', n(T.orn) + ' / ' + T.orn.length], ['gift_red', 'Подарунки', n(T.gift) + ' / ' + T.gift.length], ['it_cane', 'Цукерки на гілках', n(T.candy) + ' / ' + T.candy.length]];
     rows.forEach(([ic, a, b], i) => { const yy = y + 236 + i * 70; icon(ic, x + 170, yy, 54, k);
       L.label('fr' + i, a, x + 230, yy, { size: 40, col: CREAM, out: INK, a: k }); L.label('fv' + i, b, x + w - 140, yy, { size: 44, col: GOLD, out: INK, al: 1, a: k }); });
-    L.label('fn', 'Сірі Шарфи ще ховаються на дахах, біля річки й у ратушній вежі… далі буде', W / 2, y + h - 40, { size: 28, col: '#9fb0d8', out: '#0b1230', al: 0.5, a: k });
+    // 2026-11-11: банда прийшла до ялинки (фінал з бандою) — замість старого «далі буде»
+    L.label('fn', 'Сірі Шарфи вперше прийшли на свято — і шарфи в них тепер кольорові', W / 2, y + h - 40, { size: 28, col: '#9fb0d8', out: '#0b1230', al: 0.5, a: k });
     buttons(ITEMS.final(), W / 2, y + h + 40, t);
   }
 
