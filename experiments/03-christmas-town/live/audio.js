@@ -66,7 +66,7 @@
     if (m === 'play' || m === 'pause') return SIM.LV.HUB ? (lit() ? 'music_done' : 'music_menu') : 'music_game';
     return 'music_menu'; };
   A.refresh = () => { music(); A.apply(); };
-  A.apply = () => { if (!ctx) return; const U = window.UI || { sound: true, music: 0.7 }; const t0 = ctx.currentTime;
+  A.apply = () => { if (!ctx) return; const U = window.UI || { sound: true, music: 0.1 }; const t0 = ctx.currentTime;
     sfxBus.gain.setTargetAtTime(U.sound ? 0.9 : 0, t0, 0.05); ambBus.gain.setTargetAtTime(U.sound ? 1 : 0, t0, 0.2);
     musicBus.gain.setTargetAtTime(U.music * (U.mode === 'pause' ? 0.45 : 1), t0, 0.15); };
 

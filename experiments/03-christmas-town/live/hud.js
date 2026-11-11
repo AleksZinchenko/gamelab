@@ -4,7 +4,8 @@
 // На площі (хабі) свій HUD: торба з добром, що вже висить на ялинці, написи на табличках брам, підказка біля брами.
 (function () {
   const L = LIB, SS = L.SS, W = SIM.VIEW.W, H = SIM.VIEW.H, LV = SIM.LV;
-  const UI = (window.UI = { mode: 'menu', sel: 0, t0: 0, now: 0, sound: true, music: 0.7, hits: [], hover: -1, fade: 0 });
+  // music — гучність музики (0..1); за замовчуванням 10 % (2026-11-11, побажання користувача; було 70 %)
+  const UI = (window.UI = { mode: 'menu', sel: 0, t0: 0, now: 0, sound: true, music: 0.1, hits: [], hover: -1, fade: 0 });
   const CREAM = '#fbecc8', INK = '#2a0f12', GOLD = '#ffd66b';
   const ITEMS = {
     menu: () => [['play', 'Грати'], ['controls', 'Керування'], ['sound', 'Звук: ' + (UI.sound ? 'увімкнено' : 'вимкнено')], ['music', 'Музика: ' + Math.round(UI.music * 100) + '%'],
@@ -60,7 +61,7 @@
     if ((UI.mode === 'play' || UI.mode === 'pause' || UI.mode === 'done' || UI.mode === 'final') && ST) (LV.HUB ? hudHub : hudPlay)(ST, GT, t);
     if (UI.mode === 'menu') menu(t);
     else if (UI.mode === 'controls') controls(t);
-    else if (UI.mode === 'pause') overlay('Пауза', ITEMS.pause(), t, 0.55);
+    else if (UI.mode === 'pause') { overlay('Пауза', ITEMS.pause(), t, 0.55); if (ST) pauseTips(ST, t); }
     else if (UI.mode === 'done') done(ST, GT, t);
     else if (UI.mode === 'final') final(ST, GT, t);
     if (UI.fade > 0.003) L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, UI.fade);   // затемнення між площею і вулицею
@@ -168,6 +169,13 @@
     L.label('ovt', title, W / 2, 260, { size: 92, col: '#ffe7b0', out: '#5a1018', al: 0.5, a: k }); L.uiBox('ovtbox', 0, 180, W, 160, 8);
     buttons(items, W / 2, 400, t);
   }
+  // 2026-11-11 (відгук: «підказка зникає, прочитав чи ні»): у паузі внизу — що зараз робити і керування, щоб перечитати
+  function pauseTips(ST, t) { const k = SS(0, 0.25, t - UI.t0), B = ST.boss;
+    const goal = B && B.ph > 0 ? BOSS_TIP[B.ph] : (LV.HINT || '');                     // у бою — підказка фази, інакше — рівня
+    [[goal, H - 170, GOLD], [SIM.HINT, H - 110, CREAM]].forEach(([s, y, col], i) => { if (!s) return;
+      const w = L.labelW('ptip' + i, s, { size: 28, col, out: INK }) + 48;
+      L.rrect(W / 2 - w / 2, y - 27, w, 54, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.85 * k);
+      L.label('ptip' + i, s, W / 2, y, { size: 28, col, out: INK, al: 0.5, a: k }); }); }
   function controls(t) {
     const k = SS(0, 0.25, t - UI.t0); L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, 0.6 * k);
     const rows = [['← → або A D', 'біг'], ['Пробіл / ↑', 'стрибок (довше тримаєш — вище)'], ['X або клік мишею', 'рогатка з шишками (миша — приціл)'],
@@ -187,7 +195,11 @@
     const hp = B.ph === 3 && B.hp <= 0 ? 0 : B.hp; L.rrect(x + 26, y + 52, (w - 52) * Math.max(0, hp) / max, 14, 7, [1, 0.35 + 0.5 * bump, 0.3], [0.6, 0.12, 0.12], 1);
     const a = GT - ST.bmsg; if (a >= 0 && a < 6) { const k = SS(0, 0.4, a) * (1 - SS(5, 6, a)), s = BOSS_TIP[B.ph], tw = L.labelW('btip', s, { size: 30 }) + 40;
       L.rrect(W / 2 - tw / 2, y + 96, tw, 52, 18, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.8 * k); L.uiBox('btipb', W / 2 - tw / 2, y + 96, tw, 52, 4);
-      L.label('btip', s, W / 2, y + 122, { size: 30, col: CREAM, out: INK, al: 0.5, a: k }); } }
+      L.label('btip', s, W / 2, y + 122, { size: 30, col: CREAM, out: INK, al: 0.5, a: k }); }
+    // 2026-11-11: після великого показу підказка фази НЕ зникає — лишається дрібнішим рядком під смужкою боса
+    else if (a >= 6 && B.hp > 0) { const s = BOSS_TIP[B.ph], k = SS(6, 6.5, a), tw = L.labelW('btip2', s, { size: 24, col: CREAM, out: INK }) + 32;
+      L.rrect(W / 2 - tw / 2, y + 90, tw, 40, 14, [0.05, 0.06, 0.12], [0.02, 0.03, 0.07], 0.6 * k);
+      L.label('btip2', s, W / 2, y + 110, { size: 24, col: CREAM, out: INK, al: 0.5, a: 0.85 * k }); } }
   function done(ST, GT, t) {
     const k = SS(0, 0.4, t - UI.t0); L.solid(0, 0, W, H, [0.01, 0.02, 0.05], 0, 0, 0, 0.55 * k);
     const w = 980, h = 470, x = W / 2 - w / 2, y = 140; panel(x, y, w, h, k); L.uiBox('done', x, y, w, h, 8);

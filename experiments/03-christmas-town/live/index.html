@@ -44,6 +44,10 @@ const load = (src) => new Promise((res, rej) => { const s = document.createEleme
   try { const sv = JSON.parse(sessionStorage.getItem('live') || 'null');                     // restore across live reloads
     if (sv) { simT = sv.simT; speed = sv.speed; paused = sv.paused; if (sv.play) { SIM.use(sv.lvl || 'street'); play = Object.assign(SIM.create(), sv.play); } if (sv.ui) Object.assign(UI, sv.ui); if (!play && (UI.mode === 'play' || UI.mode === 'pause' || UI.mode === 'done')) UI.mode = 'menu';
       flash.style.opacity = 1; setTimeout(() => (flash.style.opacity = 0), 1200); } } catch (e) {}
+  // [гра] тестовий старт ?at=boss — одразу у вежі на балці перед дзвіницею (стрибни на дзвіницю — і бій почнеться)
+  if (q.get('at') === 'boss') { UI.mode = 'play'; SIM.use('tower'); play = SIM.spawn(simT);
+    const y = SIM.LV.YB + 290;                                    // балка B8 (x 100–546) на 290 px нижче підлоги дзвіниці
+    Object.assign(play, { x: 300, y, ground: null, cp: 300, cpY: y, cones: 30, camY: y - SIM.LV.CAMY }); }
   const save = () => { try { sessionStorage.setItem('live', JSON.stringify({ simT, speed, paused, play, lvl: SIM.LV.name, ui: { mode: UI.mode, sel: UI.sel, sound: UI.sound, music: UI.music } })); } catch (e) {} };
   addEventListener('keydown', (e) => {
     const c = e.code;
