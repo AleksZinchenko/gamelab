@@ -14,6 +14,8 @@ description: Turn a reference (a screenshot, gameplay video, key art, concept ar
 >   skill → copy it to `<project>/art/providers/meshy.py` and set `"provider": "meshy"` in `ref2game.json`.
 >   The key `MESHY_API_KEY` is read from `gamelab/.env`. Cost: 12 credits per image with refs, 9 without;
 >   credits are shared with the AssetFactory project, so state the planned image count before each batch.
+> - `pack.py` also copies `live/sfx/` (our games keep sounds there). For itch.io zip the CONTENTS of `dist/<name>/game/`
+>   (index.html must sit at the zip root).
 > - The user is learning: explain what each phase does in plain Ukrainian (see `gamelab/CLAUDE.md`).
 
 You turn a reference into a **live, playable slice** in its style. The user watches it in a browser page that reloads itself while you work. You also deliver the assets and a packed build.

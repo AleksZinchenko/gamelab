@@ -27,7 +27,8 @@ hint = sim.get('hint') or 'arrows / WASD move, Space jump, X action, R restart, 
 # every module the page may load (project-specific ones like batch.js / atlas.js too) and bundled fonts; never the dev tools (*.cjs)
 for f in sorted(os.listdir('live')):
     if f.endswith('.js'): shutil.copy(os.path.join('live', f), game)
-for d in ['fonts', 'audio']:
+# [gamelab] звуки ігор лабораторії лежать у live/sfx — без них зібрана гра німа
+for d in ['fonts', 'audio', 'sfx']:
     if os.path.isdir(os.path.join('live', d)): shutil.copytree(os.path.join('live', d), os.path.join(game, d))
 html = open('live/index.html').read().replace('<script>\n', '<script>window.__STATIC__ = 1;</script>\n<script>\n', 1)
 open(os.path.join(game, 'index.html'), 'w').write(html)
