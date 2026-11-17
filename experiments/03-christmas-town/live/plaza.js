@@ -36,7 +36,8 @@
 
   // ---------------- таблички брам (стовп і дошка — тут; напис — у hud.js, чіткий, повної роздільності) ----------------
   P.LBL = { size: 30, col: '#fbecc8', out: '#2a0f12' };   // ті самі опції і для заміру, і для напису (інакше текстура перемальовується щокадру)
-  P.signBox = (g, i) => { const w = L.labelW('gate' + i, g.name, P.LBL) + 44, y = g.post === false ? GY - 262 : GY - 290; return { w, h: 52, x: g.x - w / 2, y }; };
+  // ширина дошки — з напису поточною мовою (T з lang.js), той самий текст, що малює hud.js
+  P.signBox = (g, i) => { const w = L.labelW('gate' + i, T(g.name), P.LBL) + 44, y = g.post === false ? GY - 262 : GY - 290; return { w, h: 52, x: g.x - w / 2, y }; };
   P.signs = (ST, X, Y) => LV.GATES.forEach((g, i) => { const b = P.signBox(g, i), x = b.x + X(1), y = b.y + Y(1), lock = !g.to;
     if (g.post !== false) { L.solid(Math.round(g.x - 6 + X(1)), Math.round(y + b.h - 4 + 0), 12, GY + 8 - b.y - b.h + 4, WOOD_D);
       L.solid(Math.round(g.x - 4 + X(1)), Math.round(y + b.h), 4, GY - b.y - b.h, WOOD); }
