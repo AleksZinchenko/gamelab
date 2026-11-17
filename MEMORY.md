@@ -77,8 +77,8 @@
 - itch.io (2026-11-15): сторінку проєкту створює лише користувач у браузері (API itch проєкт не створює; `butler` —
   тільки завантаження збірок у вже існуючий проєкт). Ліміти HTML-гри: zip ≤ 1 ГБ, ≤ 1000 файлів, файл ≤ 200 МБ.
   Embed: 1280×720, Fullscreen — так, Mobile friendly — ні, автостарт — ні (звук браузер дозволяє лише після кліку).
-- itch.io (2026-11-17): акаунт `olezinchenko`, сторінка `olezinchenko.itch.io/yalynka` (поки Draft — стороннім заглушка,
-  Playwright її не відкриє). Kind of project — HTML (з Downloadable itch питає «Executable for…»).
+- itch.io (2026-11-17): акаунт `olezinchenko`, гра опублікована — https://olezinchenko.itch.io/yalynka (Public, автостарт;
+  перевірка сторінки ззовні — `frames/itchlive.mjs`, `frames/itchauto.mjs`). Kind of project — HTML (з Downloadable itch питає «Executable for…»).
 - Дві мови (2026-11-17): `live/lang.js` — `T('український рядок')` → англійський зі словника `EN`; ключі — самі українські
   рядки, тому дані рівнів (HINT, TITLE, назви брам) не міняються, `T()` ставиться там, де текст малюється (hud.js, plaza.js).
   Новий напис = обгорнути в `T()` + додати в `EN`; перевірка `frames/langshots.mjs <порт> en` (missing має бути «нема»).

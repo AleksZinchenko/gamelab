@@ -16,6 +16,13 @@ canvas{display:block;width:min(100vw,calc(100vh*var(--ar)));height:auto;aspect-r
 </head><body><canvas id="c"></canvas>
 <div id="hint" style="display:none"></div>
 <div id="load"><div id="loadt">&nbsp;</div><div class="bar"><div class="fill" id="loadf"></div></div></div>
+<script>
+// [гра] напис «Завантаження…» одразу, ще до lang.js (на itch скрипти гри тягнуться кілька секунд).
+// Мова — як у lang.js: збережений вибір гравця, інакше українська лише для українського браузера.
+(() => { let l = null; try { l = localStorage.getItem('yalynka.lang.v1'); } catch (e) {}
+  if (l !== 'uk' && l !== 'en') l = (navigator.languages || [navigator.language || '']).some((x) => /^uk/i.test(x)) ? 'uk' : 'en';
+  document.getElementById('loadt').textContent = l === 'uk' ? 'Завантаження…' : 'Loading…'; })();
+</script>
 <div id="dev"></div><div id="flash">reloaded</div>
 <script>
 // LIVE PREVIEW. Scripts and images load with a cache-buster; the page polls its sources and reloads itself when any of
