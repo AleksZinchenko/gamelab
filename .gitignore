@@ -49,3 +49,6 @@ experiments/*/frames/
 
 # 03: скачані звукові пакети (джерела; в гру скопійовано лише потрібне в live/sfx)
 experiments/03-christmas-town/study/sfx_dl/
+
+# 04: вхідні референси користувача — чужі картинки (Pinterest тощо), лише локально (авторські права)
+experiments/04-fantasy-world/refs/input/

@@ -1,0 +1,5 @@
+An illustrated top-down overview map of a small fantasy exploration island, painted like a game world map seen from high above at a slight angle. A turquoise lake in the middle with boardwalks and stilt huts. A deep canyon with waterfalls and a railway on a stone viaduct crossing it. A dense jungle with a giant tree. A tall lattice tower on a green hill as the central landmark. A ruined building with glass domes. A small dry plateau with a scrap village and a windmill. Paths, rails and rivers connect all the zones. The island is surrounded by sea.
+
+Art style: match the FIRST reference image exactly: the same stylized hand-painted anime look, clean outlines, large flat color areas, simple soft shading, bright saturated greens, turquoise water, warm afternoon sunlight, blue sky with big white clouds. The second reference image shows the same style. Use the remaining reference images ONLY for content and shapes, NOT for their photorealistic style.
+
+No people, no characters, no animals, no text, no letters, no numbers, no logos; any signs are blank. Full-bleed image, no frame, no border.
